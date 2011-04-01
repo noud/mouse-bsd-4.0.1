@@ -43,6 +43,7 @@
  * Definitions of device driver entry switches
  */
 
+#include <sys/types.h>
 #include <sys/queue.h>
 
 struct buf;
