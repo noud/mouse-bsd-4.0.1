@@ -57,6 +57,8 @@
  * described below.
  */
 
+#include <sys/types.h>
+
 struct mbuf;
 struct sockaddr;
 struct socket;
