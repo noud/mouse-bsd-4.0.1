@@ -35,6 +35,7 @@
 #define	_SYS_RESOURCEVAR_H_
 
 #include <sys/lock.h>
+#include <sys/resource.h>
 
 /*
  * Kernel per-process accounting / statistics
