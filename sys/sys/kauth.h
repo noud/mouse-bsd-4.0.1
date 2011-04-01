@@ -38,6 +38,8 @@
 #ifndef _SYS_KAUTH_H_
 #define	_SYS_KAUTH_H_
 
+#include <sys/types.h>
+
 struct uucred;
 struct ucred;
 struct pcred;
