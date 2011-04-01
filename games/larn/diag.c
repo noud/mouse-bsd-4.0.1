@@ -1,9 +1,9 @@
-/*	$NetBSD: diag.c,v 1.10 2006/05/11 10:23:24 mrg Exp $	*/
+/*	$NetBSD: diag.c,v 1.9 2000/07/03 03:57:42 matt Exp $	*/
 
 /* diag.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: diag.c,v 1.10 2006/05/11 10:23:24 mrg Exp $");
+__RCSID("$NetBSD: diag.c,v 1.9 2000/07/03 03:57:42 matt Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -24,11 +24,12 @@ static struct tms cputime;
  */
 #ifdef EXTRA
 static int      rndcount[16];
-void
-diag()
+void diag(void)
 {
 	int    i, j;
 	int             hit, dam;
+
+	if (autoflag) abort();
 	cursors();
 	lwclose();
 	if (lcreat(diagfile) < 0) {	/* open the diagnostic file	 */
@@ -128,9 +129,7 @@ diag()
 /*
 	subroutine to count the number of occurrences of an object
  */
-int
-dcount(l)
-	int l;
+int dcount(int l)
 {
 	int i, j, p;
 	int k;
@@ -146,8 +145,7 @@ dcount(l)
 /*
 	subroutine to draw the whole screen as the player knows it
  */
-void
-diagdrawscreen()
+void diagdrawscreen(void)
 {
 	int    i, j, k;
 
@@ -169,14 +167,13 @@ diagdrawscreen()
 	to save the game in a file
  */
 static time_t   zzz = 0;
-int
-savegame(fname)
-	char *fname;
+int savegame(char *fname)
 {
 	int    i, k;
 	struct sphere *sp;
 	struct stat     statbuf;
 
+	if (autoflag) abort();
 	nosignal = 1;
 	lflush();
 	savelevel();
@@ -235,13 +232,13 @@ savegame(fname)
 	return (0);
 }
 
-void
-restoregame(fname)
-	char           *fname;
+void restoregame(char *fname)
 {
 	int    i, k;
 	struct sphere *sp, *sp2;
 	struct stat     filetimes;
+
+	if (autoflag) abort();
 	cursors();
 	lprcat("\nRestoring . . .");
 	lflush();
@@ -352,13 +349,13 @@ restoregame(fname)
 /*
 	subroutine to not allow greedy cheaters
  */
-void
-greedy()
+void greedy(void)
 {
 #if WIZID
 	if (wizard)
 		return;
 #endif
+	if (autoflag) return;
 
 	lprcat("\n\nI am so sorry, but your character is a little TOO good!  Since this\n");
 	lprcat("cannot normally happen from an honest game, I must assume that you cheated.\n");
@@ -374,9 +371,9 @@ greedy()
 	subroutine to not allow altered save files and terminate the attempted
 	restart
  */
-void
-fsorry()
+void fsorry(void)
 {
+	if (autoflag) abort();
 	lprcat("\nSorry, but your savefile has been altered.\n");
 	lprcat("However, seeing as I am a good sport, I will let you play.\n");
 	lprcat("Be advised though, you won't be placed on the normal scoreboard.");
@@ -387,13 +384,13 @@ fsorry()
 /*
 	subroutine to not allow game if save file can't be deleted
  */
-void
-fcheat()
+void fcheat(void)
 {
 #if WIZID
 	if (wizard)
 		return;
 #endif
+	if (autoflag) abort();
 
 	lprcat("\nSorry, but your savefile can't be deleted.  This can only mean\n");
 	lprcat("that you tried to CHEAT by protecting the directory the savefile\n");

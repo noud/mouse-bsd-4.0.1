@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2006/05/11 23:16:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 1999/02/13 02:54:21 lukem Exp $
 #	@(#)Makefile	5.12 (Berkeley) 5/30/93
 
 # EXTRA

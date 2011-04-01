@@ -2,9 +2,9 @@
 
 /*
  * moreobj.c 		Larn is copyrighted 1986 by Noah Morgan.
- * 
+ *
  * Routines in this file:
- * 
+ *
  * oaltar() othrone() ochest() ofountain()
  */
 #include <sys/cdefs.h>
@@ -26,8 +26,7 @@ static void fch(int, long *);
  *
  *	subroutine to process an altar object
  */
-void
-oaltar()
+void oaltar(void)
 {
 	unsigned long   k;
 
@@ -95,7 +94,7 @@ oaltar()
 
 					case '\33':
 						return;
-					};
+					}
 
 			case 'd':
 				lprcat(" desecrate");
@@ -119,15 +118,14 @@ oaltar()
 				} else
 					lprcat("\nnothing happens");
 				return;
-			};
+			}
 	}
 }
 
 /*
 	function to cast a +3 protection on the player
  */
-static void
-ohear()
+static void ohear(void)
 {
 	lprcat("\nYou have been heard!");
 	if (c[ALTPRO] == 0)
@@ -143,9 +141,7 @@ ohear()
 
 	subroutine to process a throne object
  */
-void
-othrone(arg)
-	int             arg;
+void othrone(int arg)
 {
 	int    i, k;
 
@@ -190,12 +186,11 @@ othrone(arg)
 			case '\33':
 				ignore();
 				return;
-			};
+			}
 	}
 }
 
-void
-odeadthrone()
+void odeadthrone(void)
 {
 	int    k;
 
@@ -219,7 +214,7 @@ odeadthrone()
 			case '\33':
 				ignore();
 				return;
-			};
+			}
 	}
 }
 
@@ -230,10 +225,10 @@ odeadthrone()
 
 	subroutine to process a throne object
  */
-void
-ochest()
+void ochest(void)
 {
 	int    i, k;
+
 	lprcat("\nDo you (t) take it, (o) try to open it");
 	iopts();
 	while (1) {
@@ -247,7 +242,7 @@ ochest()
 					beep();
 					i = rnd(10);
 					lastnum = 281;	/* in case he dies */
-					lprintf("\nYou suffer %d hit points damage!", (long) i);
+					lprintf("\nYou suffer %d hit points damage!", (int) i);
 					checkloss(i);
 					switch (rnd(10)) {	/* see if he gets a
 								 * curse */
@@ -268,7 +263,7 @@ ochest()
 						beep();
 						lprcat("\nA sickness engulfs you!");
 						break;
-					};
+					}
 					item[playerx][playery] = know[playerx][playery] = 0;
 					if (rnd(100) < 69)
 						creategem();	/* gems from the chest */
@@ -289,7 +284,7 @@ ochest()
 			case '\33':
 				ignore();
 				return;
-			};
+			}
 	}
 }
 
@@ -299,10 +294,10 @@ ochest()
 	*********
  */
 
-void
-ofountain()
+void ofountain(void)
 {
 	int    x;
+
 	cursors();
 	lprcat("\nDo you (d) drink, (w) wash yourself");
 	iopts();
@@ -332,7 +327,7 @@ ofountain()
 				fntchange(-1);	/* change char levels
 						 * downward	 */
 			if (rnd(12) < 3) {
-				lprcat("\nThe fountains bubbling slowly quiets");
+				lprcat("\nThe fountain's bubbling slowly quiets");
 				item[playerx][playery] = ODEADFOUNTAIN;	/* dead fountain */
 				know[playerx][playery] = 0;
 			}
@@ -347,7 +342,7 @@ ofountain()
 			lprcat("wash yourself");
 			if (rnd(100) < 11) {
 				x = rnd((level << 2) + 2);
-				lprintf("\nOh no!  The water was foul!  You suffer %d hit points!", (long) x);
+				lprintf("\nOh no!  The water was foul!  You suffer %d hit point%s!", (int) x, (x==1)?"":"s");
 				lastnum = 273;
 				losehp(x);
 				bottomline();
@@ -371,10 +366,7 @@ ofountain()
 
 	subroutine to process an up/down of a character attribute for ofountain
  */
-static void
-fch(how, x)
-	int             how;
-	long           *x;
+static void fch(int how, long *x)
 {
 	if (how < 0) {
 		lprcat(" went down by one!");
@@ -390,11 +382,10 @@ fch(how, x)
 	a subroutine to raise or lower character levels
 	if x > 0 they are raised   if x < 0 they are lowered
  */
-void
-fntchange(how)
-	int             how;
+void fntchange(int how)
 {
 	long   j;
+
 	lprc('\n');
 	switch (rnd(9)) {
 	case 1:
@@ -424,14 +415,14 @@ fntchange(how)
 	case 7:
 		j = rnd(level + 1);
 		if (how < 0) {
-			lprintf("You lose %d hit point", (long) j);
+			lprintf("You lose %d hit point", (int) j);
 			if (j > 1)
 				lprcat("s!");
 			else
 				lprc('!');
 			losemhp((int) j);
 		} else {
-			lprintf("You gain %d hit point", (long) j);
+			lprintf("You gain %d hit point", (int) j);
 			if (j > 1)
 				lprcat("s!");
 			else
@@ -444,14 +435,14 @@ fntchange(how)
 	case 8:
 		j = rnd(level + 1);
 		if (how > 0) {
-			lprintf("You just gained %d spell", (long) j);
+			lprintf("You just gained %d spell", (int) j);
 			raisemspells((int) j);
 			if (j > 1)
 				lprcat("s!");
 			else
 				lprc('!');
 		} else {
-			lprintf("You just lost %d spell", (long) j);
+			lprintf("You just lost %d spell", (int) j);
 			losemspells((int) j);
 			if (j > 1)
 				lprcat("s!");
@@ -464,14 +455,14 @@ fntchange(how)
 	case 9:
 		j = 5 * rnd((level + 1) * (level + 1));
 		if (how < 0) {
-			lprintf("You just lost %d experience point", (long) j);
+			lprintf("You just lost %d experience point", (int) j);
 			if (j > 1)
 				lprcat("s!");
 			else
 				lprc('!');
 			loseexperience((long) j);
 		} else {
-			lprintf("You just gained %d experience point", (long) j);
+			lprintf("You just gained %d experience point", (int) j);
 			if (j > 1)
 				lprcat("s!");
 			else

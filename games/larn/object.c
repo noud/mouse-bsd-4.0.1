@@ -17,10 +17,10 @@ __RCSID("$NetBSD: object.c,v 1.10 2001/02/05 00:57:34 christos Exp $");
 	subroutine to look for an object and give the player his options
 	if an object was found.
  */
-void
-lookforobject()
+void lookforobject(void)
 {
 	int    i, j;
+
 	if (c[TIMESTOP])
 		return;		/* can't find objects is time is stopped	 */
 	i = item[playerx][playery];
@@ -491,18 +491,17 @@ lookforobject()
 	default:
 		finditem(i);
 		break;
-	};
+	}
 }
 
 /*
 	function to say what object we found and ask if player wants to take it
  */
-void
-finditem(itm)
-	int             itm;
+void finditem(int itm)
 {
 	int             tmp, i;
-	lprintf("\n\nYou have found %s ", objectname[itm]);
+
+	lprintf("\n\nYou have found %s", objectname[itm]);
 	tmp = iarg[playerx][playery];
 	switch (itm) {
 	case ODIAMOND:
@@ -517,9 +516,10 @@ finditem(itm)
 
 	default:
 		if (tmp > 0)
-			lprintf("+ %d", (long) tmp);
+			lprintf(" + %d",tmp);
 		else if (tmp < 0)
-			lprintf(" %d", (long) tmp);
+			lprintf(" - %d",-tmp);
+		break;
 	}
 	lprcat("\nDo you want to (t) take it");
 	iopts();
@@ -535,8 +535,6 @@ finditem(itm)
 	ignore();
 }
 
-
-
 /*
 	*******
 	OSTAIRS
@@ -545,11 +543,10 @@ finditem(itm)
 	subroutine to process the stair cases
 	if dir > 0 the up else down
  */
-void
-ostairs(dir)
-	int             dir;
+void ostairs(int dir)
 {
 	int    k;
+
 	lprcat("\nDo you (s) stay here  ");
 	if (dir > 0)
 		lprcat("(u) go up  ");
@@ -571,7 +568,7 @@ ostairs(dir)
 				lprcat("\nI hope you feel better.  Showing anger rids you of frustration.");
 			else {
 				k = rnd((level + 1) << 1);
-				lprintf("\nYou hurt your foot dumb dumb!  You suffer %d hit points", (long) k);
+				lprintf("\nYou hurt your foot dumdum!  You suffer %d hit points", (int) k);
 				lastnum = 276;
 				losehp(k);
 				bottomline();
@@ -603,23 +600,20 @@ ostairs(dir)
 			} else
 				lprcat("\nThe stairs lead to a dead end!");
 			return;
-		};
+		}
 }
-
-
 
 /*
 	*********
 	OTELEPORTER
 	*********
 
-	subroutine to handle a teleport trap +/- 1 level maximum
+	subroutine to handle a teleport trap, scroll of teleportation, etc
  */
-void
-oteleport(err)
-	int             err;
+void oteleport(int err)
 {
 	int    tmp;
+
 	if (err)
 		if (rnd(151) < 3)
 			died(264);	/* stuck in a rock */
@@ -648,7 +642,6 @@ oteleport(err)
 	bot_linex();
 }
 
-
 /*
 	*******
 	OPOTION
@@ -656,9 +649,7 @@ oteleport(err)
 
 	function to process a potion
  */
-void
-opotion(pot)
-	int             pot;
+void opotion(int pot)
 {
 	lprcat("\nDo you (d) drink it, (t) take it");
 	iopts();
@@ -680,24 +671,23 @@ opotion(pot)
 			if (take(OPOTION, pot) == 0)
 				forget();
 			return;
-		};
+		}
 }
 
 /*
 	function to drink a potion
  */
-void
-quaffpotion(pot)
-	int             pot;
+void quaffpotion(int pot)
 {
 	int    i, j, k;
+
 	if (pot < 0 || pot >= MAXPOTION)
 		return;		/* check for within bounds */
 	potionname[pot] = potionhide[pot];
 	switch (pot) {
 	case 9:
 		lprcat("\nYou feel greedy . . .");
-		nap(2000);
+		nap(333);
 		for (i = 0; i < MAXY; i++)
 			for (j = 0; j < MAXX; j++)
 				if ((item[j][i] == OGOLDPILE) || (item[j][i] == OMAXGOLD)) {
@@ -709,7 +699,7 @@ quaffpotion(pot)
 
 	case 19:
 		lprcat("\nYou feel greedy . . .");
-		nap(2000);
+		nap(333);
 		for (i = 0; i < MAXY; i++)
 			for (j = 0; j < MAXX; j++) {
 				k = item[j][i];
@@ -856,11 +846,10 @@ quaffpotion(pot)
 		c[SEEINVISIBLE] += rnd(1000) + 400;
 		monstnamelist[INVISIBLESTALKER] = 'I';
 		return;
-	};
+	}
 	bottomline();		/* show new stats		 */
 	return;
 }
-
 
 /*
 	*******
@@ -869,9 +858,7 @@ quaffpotion(pot)
 
 	function to process a magic scroll
  */
-void
-oscroll(typ)
-	int             typ;
+void oscroll(int typ)
 {
 	lprcat("\nDo you ");
 	if (c[BLINDCOUNT] == 0)
@@ -902,7 +889,7 @@ oscroll(typ)
 			if (take(OSCROLL, typ) == 0)
 				forget();	/* destroy it	 */
 			return;
-		};
+		}
 }
 
 /*
@@ -930,11 +917,10 @@ u_char time_change[] = {
 /*
  *	function to adjust time when time warping and taking courses in school
  */
-void
-adjusttime(tim)
-	long   tim;
+void adjusttime(long tim)
 {
 	int    j;
+
 	for (j = 0; j < 26; j++)/* adjust time related parameters */
 		if (c[time_change[j]])
 			if ((c[time_change[j]] -= tim) < 1)
@@ -945,11 +931,10 @@ adjusttime(tim)
 /*
 	function to read a scroll
  */
-void
-read_scroll(typ)
-	int             typ;
+void read_scroll(int typ)
 {
-	int    i, j;
+	int    i, j, k;
+
 	if (typ < 0 || typ >= MAXSCROLL)
 		return;		/* be sure we are within bounds */
 	scrollname[typ] = scrollhide[typ];
@@ -962,7 +947,7 @@ read_scroll(typ)
 	case 1:
 		lprcat("\nYour weapon glows for a moment");
 		enchweapon();
-		return;		/* enchant weapon */
+		return;
 
 	case 2:
 		lprcat("\nYou have been granted enlightenment!");
@@ -996,9 +981,9 @@ read_scroll(typ)
 	case 7:
 		gltime += (i = rnd(1000) - 850);	/* time warp */
 		if (i >= 0)
-			lprintf("\nYou went forward in time by %d mobuls", (long) ((i + 99) / 100));
+			lprintf("\nYou went forward in time by %d mobuls", (int) ((i + 99) / 100));
 		else
-			lprintf("\nYou went backward in time by %d mobuls", (long) (-(i + 99) / 100));
+			lprintf("\nYou went backward in time by %d mobuls", (int) (-(i + 99) / 100));
 		adjusttime((long) i);	/* adjust time for time warping */
 		return;
 
@@ -1096,20 +1081,30 @@ read_scroll(typ)
 	case 23:
 		c[LIFEPROT]++;
 		break;		/* life protection */
-	};
+	case 24:
+		for (i=MAXY-1;i>=0;i--)
+			for (j=MAXX-1;j>=0;j--)
+				switch (item[j][i]) {
+				case OIVTELETRAP:  k = OTELEPORTER;   if (0) {
+				case OTRAPARROWIV: k = OTRAPARROW;  } if (0) {
+				case OIVDARTRAP:   k = ODARTRAP;    } if (0) {
+				case OIVTRAPDOOR:  k = OTRAPDOOR;   }
+					item[j][i] = k;
+					know[j][i] = 1;
+					show1cell(j,i);
+				}
+		break;		/* trap detection */
+	}
 }
 
-
-
-void
-oorb()
+void oorb(void)
 {
 }
 
-void
-opit()
+void opit(void)
 {
 	int    i;
+
 	if (rnd(101) < 81) {
 		if (rnd(70) > 9 * c[DEXTERITY] - packweight() || rnd(101) < 5) {
 			if (level == MAXLEVEL - 1)
@@ -1122,7 +1117,7 @@ opit()
 					lprcat("\nYou fell into a pit!  Your fall is cushioned by an unknown force\n");
 				} else {
 					i = rnd(level * 3 + 3);
-					lprintf("\nYou fell into a pit!  You suffer %d hit points damage", (long) i);
+					lprintf("\nYou fell into a pit!  You suffer %d hit points damage", (int) i);
 					lastnum = 261;	/* if he dies scoreboard
 							 * will say so */
 				}
@@ -1135,17 +1130,15 @@ opit()
 	}
 }
 
-void
-obottomless()
+void obottomless(void)
 {
 	lprcat("\nYou fell into a bottomless pit!");
 	beep();
 	nap(3000);
 	died(262);
 }
-void
-oelevator(dir)
-	int             dir;
+
+void oelevator(int dir)
 {
 #ifdef lint
 	int             x;
@@ -1154,18 +1147,15 @@ oelevator(dir)
 #endif	/* lint */
 }
 
-void
-ostatue()
+void ostatue(void)
 {
 }
 
-void
-omirror()
+void omirror(void)
 {
 }
 
-void
-obook()
+void obook(void)
 {
 	lprcat("\nDo you ");
 	if (c[BLINDCOUNT] == 0)
@@ -1192,17 +1182,16 @@ obook()
 			if (take(OBOOK, iarg[playerx][playery]) == 0)
 				forget();	/* no more book	 */
 			return;
-		};
+		}
 }
 
 /*
 	function to read a book
  */
-void
-readbook(lev)
-	int    lev;
+void readbook(int lev)
 {
 	int    i, tmp;
+
 	if (lev <= 3)
 		i = rund((tmp = splev[lev]) ? tmp : 1);
 	else
@@ -1216,10 +1205,10 @@ readbook(lev)
 	}
 }
 
-void
-ocookie()
+void ocookie(void)
 {
 	char           *p;
+
 	lprcat("\nDo you (e) eat it, (t) take it");
 	iopts();
 	while (1)
@@ -1245,19 +1234,17 @@ ocookie()
 			if (take(OCOOKIE, 0) == 0)
 				forget();	/* no more book	 */
 			return;
-		};
+		}
 }
-
 
 /*
  * routine to pick up some gold -- if arg==OMAXGOLD then the pile is worth
  * 100* the argument
  */
-void
-ogold(arg)
-	int             arg;
+void ogold(int arg)
 {
 	long   i;
+
 	i = iarg[playerx][playery];
 	if (arg == OMAXGOLD)
 		i *= 100;
@@ -1265,16 +1252,16 @@ ogold(arg)
 		i *= 1000;
 	else if (arg == ODGOLD)
 		i *= 10;
-	lprintf("\nIt is worth %d!", (long) i);
+	lprintf("\nIt is worth %d!", (int) i);
 	c[GOLD] += i;
 	bottomgold();
 	item[playerx][playery] = know[playerx][playery] = 0;	/* destroy gold	 */
 }
 
-void
-ohome()
+void ohome(void)
 {
 	int    i;
+
 	nosignal = 1;		/* disable signals */
 	for (i = 0; i < 26; i++)
 		if (iven[i] == OPOTION)
@@ -1314,7 +1301,7 @@ ohome()
 			died(269);
 		}
 		lprcat("\nThe diagnosis is confirmed as dianthroritis.  He guesses that\n");
-		lprintf("your daughter has only %d mobuls left in this world.  It's up to you,\n", (long) ((TIMELIMIT - gltime + 99) / 100));
+		lprintf("your daughter has only %d mobuls left in this world.  It's up to you,\n", (int) ((TIMELIMIT - gltime + 99) / 100));
 		lprintf("%s, to find the only hope for your daughter, the very rare\n", logname);
 		lprcat("potion of cure dianthroritis.  It is rumored that only deep in the\n");
 		lprcat("depths of the caves can this potion be found.\n\n\n");
@@ -1335,14 +1322,12 @@ ohome()
 }
 
 /* routine to save program space	 */
-void
-iopts()
+void iopts(void)
 {
 	lprcat(", or (i) ignore it? ");
 }
 
-void
-ignore()
+void ignore(void)
 {
 	lprcat("ignore\n");
 }

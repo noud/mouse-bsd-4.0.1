@@ -1,4 +1,4 @@
-/* $NetBSD: header.h,v 1.16.12.1 2008/02/03 18:13:34 riz Exp $	 */
+/* $NetBSD: header.h,v 1.15 2005/02/03 02:23:02 perry Exp $	 */
 
 /* header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
@@ -25,7 +25,7 @@
 /* maximum number of potions that are possible	 */
 #define TIMELIMIT 30000
 /* the maximum number of moves before the game is called */
-#define TAXRATE 1/20
+#define TAXRATE 0
 /* the tax rate for the LRS */
 #define MAXOBJ 93
 /* the maximum number of objects   n < MAXOBJ */
@@ -349,7 +349,9 @@ extern char    *objectname[], *potionhide[], *potionname[],
                *spelcode[], *spelname[], *spelmes[], aborted[],
 	        spelweird[MAXMONST + 8][SPNUM];
 extern u_char   potprob[];
+extern unsigned int potprobn;
 extern u_char   predostuff, restorflag, scprob[];
+extern unsigned int scprobn;
 extern u_char   screen[MAXX][MAXY], sex;
 extern char    *speldescript[], *scrollhide[], *scrollname[];
 extern u_char   spelknow[];
@@ -360,7 +362,9 @@ extern short    iarg[MAXX][MAXY], ivenarg[], lasthx, lasthy, lastnum, lastpx,
 extern short    nobeep, oldx, oldy, playerx, playery, level;
 extern int      dayplay, enable_scroll, srcount, yrepcount, userid, wisid,
                 lfd, fd;
-extern gid_t    gid, egid;
+extern int	autoflag;
+extern uid_t    uid, euid;
+extern gid_t	gid, egid;
 extern long     outstanding_taxes, skill[], gltime, c[], cbak[];
 extern time_t	initialtime;
 extern unsigned long randx;
@@ -369,11 +373,16 @@ extern struct monst monster[];
 extern struct sphere *spheres;
 extern struct _itm itm[];
 extern int      rmst, maxitm, lasttime;
+typedef enum {
+	  INVSORT_TYPE = 1,
+	  INVSORT_ALPHA
+	  } INVSORT;
+extern INVSORT invsort;
 
 /* macro to create scroll #'s with probability of occurrence */
-#define newscroll() (scprob[rund(81)])
+#define newscroll() (scprob[rund(scprobn)])
 /* macro to return a potion # created with probability of occurrence */
-#define newpotion() (potprob[rund(41)])
+#define newpotion() (potprob[rund(potprobn)])
 /* macro to return the + points on created leather armor */
 #define newleather() (nlpts[rund(c[HARDGAME]?13:15)])
 /* macro to return the + points on chain armor */
@@ -403,6 +412,7 @@ extern int      rmst, maxitm, lasttime;
 #define cltoeoln() lprcat("\33[K")
 #else	/* VT100 */
 /* defines below are for use in the termcap mode only */
+/* this list must _not_ contain 7, 8, or 10 (BEL, BS, NL). */
 #define ST_START 1
 #define ST_END   2
 #define BOLD     3
@@ -411,14 +421,17 @@ extern int      rmst, maxitm, lasttime;
 #define CL_LINE  6
 #define CL_DOWN 14
 #define CURSOR  15
+#define READING 16
+#define SCROLL  17
+#define SCOREIS 18
 /* macro to turn on bold display for the terminal */
 #define setbold() (*lpnt++ = ST_START)
 /* macro to turn off bold display for the terminal */
 #define resetbold() (*lpnt++ = ST_END)
 /* macro to setup the scrolling region for the terminal */
-#define setscroll() enable_scroll=1
+extern void setscroll(void);
 /* macro to clear the scrolling region for the terminal */
-#define resetscroll() enable_scroll=0
+extern void resetscroll(void);
 /* macro to clear the screen and home the cursor */
 #define clear() (*lpnt++ =CLEAR, cbak[SPELLS]= -50)
 /* macro to clear to end of line */
