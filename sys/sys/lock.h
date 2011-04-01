@@ -83,6 +83,8 @@
 #include "opt_multiprocessor.h"
 #endif
 
+#include <sys/types.h>
+
 #include <sys/queue.h>
 #include <machine/lock.h>
 
