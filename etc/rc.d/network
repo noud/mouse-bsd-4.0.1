@@ -200,6 +200,11 @@ network_start()
 					ipf -y >/dev/null
 				fi
 			fi
+			eval args=\"\$ifsetup_pre_$int\"
+			if [ -n "$args" ]; then
+				eval "$args"
+			fi
+			eval args=\$ifconfig_$int
 			if [ -n "$args" ]; then
 				echo -n " $int"
 				ifconfig $int $args
@@ -226,6 +231,10 @@ network_start()
 					warn "interface $int not configured."
 				fi
 				continue
+			fi
+			eval args=\"\$ifsetup_post_$int\"
+			if [ -n "$args" ]; then
+				eval "$args"
 			fi
 			configured_interfaces="$configured_interfaces $int"
 		done
