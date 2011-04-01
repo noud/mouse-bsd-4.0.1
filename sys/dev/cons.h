@@ -80,6 +80,8 @@
 #ifndef _SYS_DEV_CONS_H_
 #define _SYS_DEV_CONS_H_
 
+#include <sys/types.h>
+
 struct consdev {
 	void	(*cn_probe)	/* probe hardware and fill in consdev info */
 		   (struct consdev *);
