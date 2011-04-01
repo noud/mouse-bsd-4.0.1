@@ -425,7 +425,7 @@ prepare(char *nlistf, char *memf, struct protox *tp)
 		(void)setgid(getgid());
 		if (kvmd == NULL)
 			err(1, "kvm error: %s", buf);
-	
+
 		if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
 			if (nlistf)
 				errx(1, "%s: no namelist", nlistf);
@@ -891,7 +891,7 @@ usage()
 	(void)fprintf(stderr,
 "usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n", progname);
 	(void)fprintf(stderr,
-"       %s [-bdgiLmnqrsSv] [-f address_family] [-M core] [-N system]\n", 
+"       %s [-bdgiLmnqrsSv] [-f address_family] [-M core] [-N system]\n",
 	progname);
 	(void)fprintf(stderr,
 "       %s [-dn] [-I interface] [-M core] [-N system] [-w wait]\n", progname);

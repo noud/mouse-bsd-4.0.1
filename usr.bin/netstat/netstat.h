@@ -135,7 +135,7 @@ char	*netname4(in_addr_t, in_addr_t);
 /* char	*netname __P((u_int32_t, u_int32_t)); */
 #ifdef INET6
 char	*netname6 __P((struct sockaddr_in6 *, struct sockaddr_in6 *));
-#endif 
+#endif
 char	*atalk_print __P((const struct sockaddr *, int));
 char	*atalk_print2 __P((const struct sockaddr *, const struct sockaddr *,
     int));

@@ -184,7 +184,7 @@ p_rttables(int af)
 #endif
 }
 
-/* 
+/*
  * column widths; each followed by one space
  * width of destination/gateway column
  * strlen("fe80::aaaa:bbbb:cccc:dddd@gif0") == 30, strlen("/128") == 4
