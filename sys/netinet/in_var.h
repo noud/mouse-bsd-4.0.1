@@ -71,7 +71,13 @@
 #ifndef _NETINET_IN_VAR_H_
 #define _NETINET_IN_VAR_H_
 
+#include <net/if.h>
+#include <sys/lwp.h>
+#include <sys/mbuf.h>
 #include <sys/queue.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 /*
  * Interface address, Internet version.  One of these structures
