@@ -259,6 +259,11 @@ This option should be set for programs that can be coerced to a denial of
 service attack via patterns that expand to a very large number of matches,
 such as a long string of
 .Li */../*/..
+.It Dv GLOB_PERIOD
+Normally, a dot at the beginning of a pathname component must be
+matched literally.  This flag suppresses this special treatment, making
+a dot an ordinary characters even at the beginning of a pathname
+component.
 .El
 .Pp
 If, during the search, a directory is encountered that cannot be opened

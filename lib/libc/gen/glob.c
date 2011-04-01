@@ -695,8 +695,9 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern,
 		u_char *sc;
 		Char *dc;
 
-		/* Initial DOT must be matched literally. */
-		if (dp->d_name[0] == DOT && *pattern != DOT)
+		/* Initial DOT must be matched literally, unless GLOB_PERIOD. */
+		if (dp->d_name[0] == DOT && *pattern != DOT &&
+		    !(pglob->gl_flags & GLOB_PERIOD))
 			continue;
 		/*
 		 * The resulting string contains EOS, so we can
