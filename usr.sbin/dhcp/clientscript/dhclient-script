@@ -4,7 +4,7 @@
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
-RESOLV=/etc/resolv.conf
+RESOLV=/etc/resolv.conf.dhcp
 SIGNATURE="# Created by dhclient from"
 INTSIG="$SIGNATURE $interface"
 
