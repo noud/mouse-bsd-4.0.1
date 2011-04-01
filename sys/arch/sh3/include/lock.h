@@ -43,6 +43,8 @@
 #ifndef _SH3_LOCK_H_
 #define	_SH3_LOCK_H_
 
+#include <sh3/types.h>
+
 static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
 static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
