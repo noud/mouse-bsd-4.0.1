@@ -1360,10 +1360,12 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	/*
 	 * If the interface is learning, and the source
 	 * address is valid and not multicast, record
-	 * the address.
+	 * the address.  But don't do this if the destination
+	 * is broadcast; such packets are looped back too often.
 	 */
 	if ((bif->bif_flags & IFBIF_LEARNING) != 0 &&
 	    ETHER_IS_MULTICAST(eh->ether_shost) == 0 &&
+	    memcmp(etherbroadcastaddr,eh->ether_dhost,sizeof(etherbroadcastaddr)) &&
 	    (eh->ether_shost[0] == 0 &&
 	     eh->ether_shost[1] == 0 &&
 	     eh->ether_shost[2] == 0 &&
