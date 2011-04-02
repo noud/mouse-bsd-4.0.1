@@ -2327,6 +2327,7 @@
 ./usr/share/man/cat8/spawn.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/spray.0			man-rpcutil-catman	.cat
 ./usr/share/man/cat8/sprayd.0			man-rpcserver-catman	.cat
+./usr/share/man/cat8/srtconfig.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/ssh-keysign.0		man-secsh-catman	crypto,.cat
 ./usr/share/man/cat8/sshd.0			man-secsh-catman	crypto,.cat
 ./usr/share/man/cat8/statd.0			man-nfsserver-catman	.cat
@@ -4741,6 +4742,7 @@
 ./usr/share/man/man8/spawn.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/spray.8			man-rpcutil-man		.man
 ./usr/share/man/man8/sprayd.8			man-rpcserver-man	.man
+./usr/share/man/man8/srtconfig.8		man-netutil-man		.man
 ./usr/share/man/man8/ssh-keysign.8		man-secsh-man		crypto,.man
 ./usr/share/man/man8/sshd.8			man-secsh-man		crypto,.man
 ./usr/share/man/man8/statd.8			man-nfsserver-man	.man

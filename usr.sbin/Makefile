@@ -20,7 +20,7 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
  	rpc.statd rpcbind rwhod sa screenblank sdpd services_mkdb sesd \
 	sliplogin sntp \
-	spray sti sunlabel sup syslogd tadpolectl tcpdchk \
+	spray srtconfig sti sunlabel sup syslogd tadpolectl tcpdchk \
 	tcpdmatch tcpdump timed tpctl traceroute trpt unlink \
 	usbdevs user videomode vipw veriexecgen vnconfig wiconfig wlanctl wpa \
 	wsconscfg wsfontload wsmoused wsmuxctl zdump zic
