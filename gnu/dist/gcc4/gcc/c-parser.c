@@ -1638,7 +1638,7 @@ c_parser_enum_specifier (c_parser *parser)
 	    }
 	  if (!seen_comma)
 	    {
-	      c_parser_error (parser, "expected %<,%> or %<}%>");
+	      c_parser_error (parser, /*{*/"expected %<,%> or %<}%>");
 	      c_parser_skip_until_found (parser, CPP_CLOSE_BRACE, NULL);
 	      values = error_mark_node;
 	      break;
@@ -1652,7 +1652,7 @@ c_parser_enum_specifier (c_parser *parser)
     }
   else if (!ident)
     {
-      c_parser_error (parser, "expected %<{%>");
+      c_parser_error (parser, "expected %<{%>"/*}*/);
       ret.spec = error_mark_node;
       ret.kind = ctsk_tagref;
       return ret;
@@ -1822,7 +1822,7 @@ c_parser_struct_or_union_specifier (c_parser *parser)
     }
   else if (!ident)
     {
-      c_parser_error (parser, "expected %<{%>");
+      c_parser_error (parser, "expected %<{%>"/*}*/);
       ret.spec = error_mark_node;
       ret.kind = ctsk_tagref;
       return ret;
@@ -1964,14 +1964,14 @@ c_parser_struct_declaration (c_parser *parser)
 	    }
 	  else
 	    {
-	      c_parser_error (parser, "expected %<,%>, %<;%> or %<}%>");
+	      c_parser_error (parser, /*{*/"expected %<,%>, %<;%> or %<}%>");
 	      break;
 	    }
 	}
       else
 	{
 	  c_parser_error (parser,
-			  "expected %<:%>, %<,%>, %<;%>, %<}%> or "
+			  /*{*/"expected %<:%>, %<,%>, %<;%>, %<}%> or "
 			  "%<__attribute__%>");
 	  break;
 	}
@@ -2928,7 +2928,7 @@ c_parser_braced_init (c_parser *parser, tree type, bool nested_p)
       struct c_expr ret;
       ret.value = error_mark_node;
       ret.original_code = ERROR_MARK;
-      c_parser_skip_until_found (parser, CPP_CLOSE_BRACE, "expected %<}%>");
+      c_parser_skip_until_found (parser, CPP_CLOSE_BRACE, /*{*/"expected %<}%>");
       return ret;
     }
   c_parser_consume_token (parser);
@@ -3184,7 +3184,7 @@ static tree
 c_parser_compound_statement (c_parser *parser)
 {
   tree stmt;
-  if (!c_parser_require (parser, CPP_OPEN_BRACE, "expected %<{%>"))
+  if (!c_parser_require (parser, CPP_OPEN_BRACE, "expected %<{%>"/*}*/))
     return error_mark_node;
   stmt = c_begin_compound_stmt (true);
   c_parser_compound_statement_nostart (parser);
@@ -5728,7 +5728,7 @@ c_parser_objc_method_definition (c_parser *parser)
     }
   if (!c_parser_next_token_is (parser, CPP_OPEN_BRACE))
     {
-      c_parser_error (parser, "expected %<{%>");
+      c_parser_error (parser, "expected %<{%>"/*}*/);
       return;
     }
   objc_pq_context = 0;
@@ -6015,7 +6015,7 @@ c_parser_objc_try_catch_statement (c_parser *parser)
 	}
       c_parser_skip_until_found (parser, CPP_CLOSE_PAREN, "expected %<)%>");
       objc_begin_catch_clause (grokparm (parm));
-      if (c_parser_require (parser, CPP_OPEN_BRACE, "expected %<{%>"))
+      if (c_parser_require (parser, CPP_OPEN_BRACE, "expected %<{%>"/*}*/))
 	c_parser_compound_statement_nostart (parser);
       objc_finish_catch_clause ();
     }
