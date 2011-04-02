@@ -142,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.160.2.1 2007/06/15 11:00:22 liamjfoy Exp $
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
 #include "opt_vnd.h"
+#include "diskwatch.h"
 #endif
 
 #include <sys/param.h>
@@ -183,6 +184,10 @@ int dovndcluster = 1;
 #define VDB_IO		0x04
 #define VDB_LABEL	0x08
 int vnddebug = 0x00;
+#endif
+
+#if NDISKWATCH > 0
+#include <dev/pseudo/diskwatch-kern.h>
 #endif
 
 #define vndunit(x)	DISKUNIT(x)
@@ -487,6 +492,14 @@ vndstrategy(struct buf *bp)
 		    bp, vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING)) <= 0)
 			goto done;
 	}
+#if NDISKWATCH > 0
+	if ((bp->b_flags & (B_READ|B_WRITE)) == B_WRITE) {
+		int p;
+		p = DISKPART(bp->b_dev);
+		if (vnd->watchunit[p] >= 0)
+			diskwatch_watch(vnd->watchunit[p],bp);
+	}
+#endif
 
 	/*
 	 * Put the block number in terms of the logical blocksize
@@ -968,6 +981,10 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case DIOCKLABEL:
 	case DIOCWLABEL:
 	case DIOCGDEFLABEL:
+#if NDISKWATCH > 0
+	case DWIOCSET:
+	case DWIOCCLR:
+#endif
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
 	case ODIOCSDINFO:
@@ -979,6 +996,23 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	}
 
 	switch (cmd) {
+#if NDISKWATCH > 0
+	case DWIOCSET:
+		if (l)
+			return(EINVAL);
+		if (vnd->watchunit[DISKPART(dev)] >= 0)
+			return(EBUSY);
+		vnd->watchunit[DISKPART(dev)] = *(int *)data;
+		return (0);
+
+	case DWIOCCLR:
+		if (l)
+			return(EINVAL);
+		if (vnd->watchunit[DISKPART(dev)] != *(int *)data)
+			return(EBUSY);
+		vnd->watchunit[DISKPART(dev)] = -1;
+		return (0);
+#endif
 	case VNDIOCSET:
 		if (vnd->sc_flags & VNF_INITED)
 			return (EBUSY);
@@ -1179,6 +1213,12 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_size = dbtob(vnd->sc_size);
+#if NDISKWATCH > 0
+		{	int j;
+			for (j=0;j<MAXPARTITIONS;j++)
+				vnd->watchunit[j] = -1;
+		}
+#endif
 		vnd->sc_flags |= VNF_INITED;
 
 		/* create the kernel thread, wait for it to be up */
@@ -1543,6 +1583,13 @@ vndclear(struct vnd_softc *vnd, int myminor)
 		}
 	}
 #endif /* VND_COMPRESSION */
+#if NDISKWATCH > 0
+	{	int j;
+		for (j=0;j<MAXPARTITIONS;j++)
+			if (vnd->watchunit[j] >= 0)
+				diskwatch_detach(vnd->watchunit[j]);
+	}
+#endif
 	vnd->sc_flags &=
 	    ~(VNF_INITED | VNF_READONLY | VNF_VLABEL
 	      | VNF_VUNCONF | VNF_COMP);
