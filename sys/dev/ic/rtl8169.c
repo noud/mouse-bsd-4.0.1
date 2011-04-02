@@ -592,6 +592,12 @@ re_attach(struct rtk_softc *sc)
 		eaddr[(i * 2) + 1] = val >> 8;
 	}
 
+	{
+		uint32_t hwrev;
+		hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
+		aprint_normal("%s: hwrev 0x%08x\n",&sc->sc_dev.dv_xname[0],hwrev);
+	}
+
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
 		uint32_t hwrev;
 
