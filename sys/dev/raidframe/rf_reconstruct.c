@@ -632,6 +632,12 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	done = 0;
 	while (!done) {
 		
+		if (raidPtr->waitShutdown) {
+			/* someone is unconfiguring this array... bail on the reconstruct.. */
+			recon_error = 1;
+			break;
+		}
+
 		num_writes = 0;
 		
 		/* issue a read for each surviving disk */
