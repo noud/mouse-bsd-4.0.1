@@ -1843,6 +1843,7 @@ ip_forward(struct mbuf *m, int srcrt)
 	int error, type = 0, code = 0, destmtu = 0;
 	struct mbuf *mcopy;
 	n_long dest;
+	int rmtu;
 
 	/*
 	 * We are now in the output path.
@@ -1934,9 +1935,10 @@ ip_forward(struct mbuf *m, int srcrt)
 		}
 	}
 
+	rmtu = 0;
 	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
-	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
-	    (struct ip_moptions *)NULL, (struct socket *)NULL);
+	    (IP_FORWARDING | IP_RETURNMTU | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
+	    (struct ip_moptions *)NULL, (struct socket *)NULL, &rmtu);
 
 	if (error)
 		ipstat.ips_cantforward++;
@@ -1997,7 +1999,7 @@ ip_forward(struct mbuf *m, int srcrt)
 			    &ipsecerror);
 #endif
 
-			destmtu = ipforward_rt.ro_rt->rt_ifp->if_mtu;
+			destmtu = rmtu ? : ipforward_rt.ro_rt->rt_ifp->if_mtu;
 #if defined(IPSEC) || defined(FAST_IPSEC)
 			if (sp != NULL) {
 				/* count IPsec header size */
