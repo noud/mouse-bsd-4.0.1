@@ -30,3 +30,5 @@ device-major	lockstat	char 177		lockstat
 device-major	puffs		char 178		puffs
 device-major	bio		char 181		bio
 device-major	twa		char 187		twa
+
+device-major	pfw		char 144		pfw

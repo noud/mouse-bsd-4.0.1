@@ -1496,3 +1496,5 @@ define	onewire_bitbang
 include	"dev/gpio/files.gpio"
 
 include "dev/onewire/files.onewire"
+
+include "dev/pseudo/files"

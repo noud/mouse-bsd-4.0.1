@@ -1,0 +1,2 @@
+defpseudo pfw
+file	dev/pseudo/pfw.c		pfw			needs-flag
