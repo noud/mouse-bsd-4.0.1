@@ -695,9 +695,18 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern,
 		u_char *sc;
 		Char *dc;
 
-		/* Initial DOT must be matched literally. */
-		if (dp->d_name[0] == DOT && *pattern != DOT)
+		/* Initial DOT must be matched literally, unless GLOB_PERIOD. */
+		if (dp->d_name[0] == DOT && *pattern != DOT &&
+		    !(pglob->gl_flags & GLOB_PERIOD))
 			continue;
+
+		/* If GLOB_NO_DOTDIRS, . and .. vanish. */
+		if ((pglob->gl_flags & GLOB_NO_DOTDIRS) &&
+		    (dp->d_name[0] == DOT) &&
+		    ((dp->d_name[1] == EOS) ||
+		     ((dp->d_name[1] == DOT) && (dp->d_name[2] == EOS))))
+			continue;
+
 		/*
 		 * The resulting string contains EOS, so we can
 		 * use the pathlim character, if it is the nul

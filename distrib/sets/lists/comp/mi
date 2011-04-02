@@ -1301,6 +1301,7 @@
 ./usr/include/net/if_pppvar.h			comp-c-include		obsolete
 ./usr/include/net/if_slvar.h			comp-c-include		obsolete
 ./usr/include/net/if_sppp.h			comp-c-include
+./usr/include/net/if_srt.h			comp-c-include
 ./usr/include/net/if_stf.h			comp-c-include
 ./usr/include/net/if_stripvar.h			comp-c-include		obsolete
 ./usr/include/net/if_tap.h			comp-c-include
@@ -1883,6 +1884,7 @@
 ./usr/include/sys/time.h			comp-c-include
 ./usr/include/sys/timeb.h			comp-c-include
 ./usr/include/sys/timepps.h			comp-c-include
+./usr/include/sys/timersock.h			comp-c-include
 ./usr/include/sys/times.h			comp-c-include
 ./usr/include/sys/timex.h			comp-c-include
 ./usr/include/sys/tprintf.h			comp-obsolete		obsolete

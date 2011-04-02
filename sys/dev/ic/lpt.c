@@ -78,7 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.68 2006/11/16 01:32:51 christos Exp $");
 #define	STEP		hz/4
 
 #define	LPTPRI		(PZERO+8)
+#ifndef LPT_BSIZE
 #define	LPT_BSIZE	1024
+#endif
 
 #define LPTDEBUG
 
@@ -102,7 +104,7 @@ const struct cdevsw lpt_cdevsw = {
 };
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
-#define	LPTFLAGS(s)	(minor(s) & 0xe0)
+#define	LPTFLAGS(s)	(minor(s) & ~0x1f)
 
 void
 lpt_attach_subr(sc)
@@ -129,7 +131,7 @@ lpt_attach_subr(sc)
 int
 lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	u_char flags = LPTFLAGS(dev);
+	unsigned short int flags = LPTFLAGS(dev);
 	struct lpt_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -140,6 +142,14 @@ lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 	sc = device_lookup(&lpt_cd, LPTUNIT(dev));
 	if (!sc || !sc->sc_dev_ok)
 		return ENXIO;
+
+ if (flags & LPT_RAW)
+  { if (sc->sc_state) return(EBUSY);
+    sc->sc_state = LPT_OPEN;
+    sc->sc_flags = flags;
+    bus_space_write_1(sc->sc_iot,sc->sc_ioh,lpt_control,0);
+    return(0);
+  }
 
 #if 0	/* XXX what to do? */
 	if (sc->sc_irq == IRQUNK && (flags & LPT_NOINTR) == 0)
@@ -255,6 +265,12 @@ lptclose(dev_t dev, int flag, int mode,
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
+ if (sc->sc_flags & LPT_RAW)
+  { sc->sc_flags = 0;
+    sc->sc_state = 0;
+    return(0);
+  }
+
 	if (sc->sc_count)
 		(void) lptpushbytes(sc);
 
@@ -348,6 +364,16 @@ lptwrite(dev_t dev, struct uio *uio, int flags)
 	size_t n;
 	int error = 0;
 
+ if (sc->sc_flags & LPT_RAW)
+  { unsigned char c[2];
+    if (uio->uio_resid < 2) return(EINVAL);
+    uiomove(&c[0],2,uio);
+    c[1] &= LPC_STROBE | LPC_AUTOLF | LPC_NINIT | LPC_SELECT;
+    bus_space_write_1(sc->sc_iot,sc->sc_ioh,lpt_data,c[0]);
+    bus_space_write_1(sc->sc_iot,sc->sc_ioh,lpt_control,c[1]);
+    return(0);
+  }
+
 	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {
 		uiomove(sc->sc_cp = sc->sc_inbuf, n, uio);
 		sc->sc_count = n;
@@ -381,6 +407,8 @@ lptintr(arg)
 	if ((sc->sc_state & LPT_OPEN) == 0)
 		return 0;
 #endif
+
+ if (sc->sc_flags & LPT_RAW) return(1);
 
 	/* is printer online and ready for output */
 	if (NOT_READY() && NOT_READY_ERR())

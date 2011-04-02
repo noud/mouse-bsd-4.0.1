@@ -1156,6 +1156,7 @@ defpseudo ppp:		ifnet, bpf_filter
 defpseudo pppoe:	ifnet, ether, sppp
 defpseudo sppp:		ifnet
 defpseudo tun:		ifnet
+defpseudo srt:		ifnet
 defpseudo vlan:		ifnet, ether
 defpseudo bridge:	ifnet, ether
 defpseudo bpfilter:	ifnet, bpf_filter
@@ -1361,6 +1362,7 @@ file	kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg
 file	kern/sysv_msg.c			sysvmsg
 file	kern/sysv_sem.c			sysvsem
 file	kern/sysv_shm.c			sysvshm
+file	kern/timer-impl.c
 file	kern/tty.c
 file	kern/tty_conf.c
 file	kern/tty_bsdpty.c		compat_bsdpty
@@ -1422,6 +1424,7 @@ file	net/if_ppp.c			ppp			needs-flag
 file	net/if_stf.c			stf & inet & inet6	needs-flag
 file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
+file	net/if_srt.c			srt
 file	net/if_strip.c			strip			needs-flag
 file	net/if_tokensubr.c		token			needs-flag
 file	net/if_tap.c			tap			needs-flag
@@ -1496,3 +1499,5 @@ define	onewire_bitbang
 include	"dev/gpio/files.gpio"
 
 include "dev/onewire/files.onewire"
+
+include "dev/pseudo/files"

@@ -1233,6 +1233,7 @@
 ./usr/sbin/spamdb				base-obsolete		obsolete
 ./usr/sbin/spawn				base-obsolete		obsolete
 ./usr/sbin/spray				base-rpcutil-bin
+./usr/sbin/srtconfig				base-netutil-bin
 ./usr/sbin/sshd					base-secsh-bin		crypto
 ./usr/sbin/statmsg				base-obsolete		obsolete
 ./usr/sbin/stdethers				base-nis-bin		yp

@@ -118,10 +118,10 @@ struct gd_toc {
 #define GDROM_COND	GDROM(0x9c)
 
 int	gdrom_getstat(void);
-int	gdrom_do_command(struct gdrom_softc *, void *, void *, unsigned int);
-int	gdrom_command_sense(struct gdrom_softc *, void *, void *, unsigned int);
+int	gdrom_do_command(struct gdrom_softc *, void *, void *, unsigned int, int *);
+int	gdrom_command_sense(struct gdrom_softc *, void *, void *, unsigned int, int *);
 int	gdrom_read_toc(struct gdrom_softc *, struct gd_toc *);
-int	gdrom_read_sectors(struct gdrom_softc *, void *, int, int);
+int	gdrom_read_sectors(struct gdrom_softc *, void *, int, int, int *);
 int	gdrom_mount_disk(struct gdrom_softc *);
 int	gdrom_intr(void *);
 
@@ -202,7 +202,7 @@ gdrom_intr(void *arg)
 
 
 int gdrom_do_command(struct gdrom_softc *sc, void *req, void *buf,
-    unsigned int nbyt)
+    unsigned int nbyt, int *resid)
 {
 	int i, s;
 	short *ptr = req;
@@ -239,12 +239,15 @@ int gdrom_do_command(struct gdrom_softc *sc, void *req, void *buf,
 
 	splx(s);
 
+	if (resid != 0)
+		*resid = sc->cmd_result_size;
+
 	return sc->cmd_cond;
 }
 
 
 int gdrom_command_sense(struct gdrom_softc *sc, void *req, void *buf,
-    unsigned int nbyt)
+    unsigned int nbyt, int *resid)
 {
 	/* 76543210 76543210
 	   0   0x13      -
@@ -257,7 +260,7 @@ int gdrom_command_sense(struct gdrom_softc *sc, void *req, void *buf,
 	unsigned char cmd[12];
 	int sense_key, sense_specific;
 
-	int cond = gdrom_do_command(sc, req, buf, nbyt);
+	int cond = gdrom_do_command(sc, req, buf, nbyt, resid);
 
 	if (cond < 0) {
 #ifdef GDROMDEBUG
@@ -278,7 +281,7 @@ int gdrom_command_sense(struct gdrom_softc *sc, void *req, void *buf,
 	cmd[0] = 0x13;
 	cmd[4] = sizeof(sense_data);
 	
-	gdrom_do_command(sc, cmd, sense_data, sizeof(sense_data));
+	gdrom_do_command(sc, cmd, sense_data, sizeof(sense_data), 0);
 	
 	sense_key = sense_data[1] & 0xf;
 	sense_specific = sense_data[4];
@@ -314,10 +317,10 @@ int gdrom_read_toc(struct gdrom_softc *sc, struct gd_toc *toc)
 	cmd[3] = sizeof(struct gd_toc) >> 8;
 	cmd[4] = sizeof(struct gd_toc) & 0xff;
 	
-	return gdrom_command_sense(sc, cmd, toc, sizeof(struct gd_toc));
+	return gdrom_command_sense(sc, cmd, toc, sizeof(struct gd_toc), 0);
 }
 
-int gdrom_read_sectors(struct gdrom_softc *sc, void *buf, int sector, int cnt)
+int gdrom_read_sectors(struct gdrom_softc *sc, void *buf, int sector, int cnt, int *resid)
 {
 	/* 76543210 76543210
 	   0   0x30    datafmt
@@ -339,7 +342,7 @@ int gdrom_read_sectors(struct gdrom_softc *sc, void *buf, int sector, int cnt)
 	cmd[9] = cnt>>8;
 	cmd[10] = cnt;
 
-	return gdrom_command_sense(sc, cmd, buf, cnt << 11);
+	return gdrom_command_sense(sc, cmd, buf, cnt << 11, resid);
 }
 
 int gdrom_mount_disk(struct gdrom_softc *sc)
@@ -358,7 +361,7 @@ int gdrom_mount_disk(struct gdrom_softc *sc)
 	cmd[0] = 0x70;
 	cmd[1] = 0x1f;
 	
-	return gdrom_command_sense(sc, cmd, NULL, 0);
+	return gdrom_command_sense(sc, cmd, NULL, 0, 0);
 }
 
 int
@@ -470,7 +473,7 @@ void
 gdromstrategy(struct buf *bp)
 {
 	struct gdrom_softc *sc;
-	int s, unit, error;
+	int s, unit, error, resid;
 #ifdef GDROMDEBUG
 	printf("GDROM: strategy\n");
 #endif
@@ -478,8 +481,10 @@ gdromstrategy(struct buf *bp)
 	unit = DISKUNIT(bp->b_dev);
 	sc = gdrom_cd.cd_devs[unit];
 
-	if (bp->b_bcount == 0)
-		goto done;
+	if (bp->b_bcount == 0) {
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+	}
 
 	bp->b_rawblkno = bp->b_blkno / (2048 / DEV_BSIZE) + sc->openpart_start;
 
@@ -495,16 +500,14 @@ gdromstrategy(struct buf *bp)
 	splx(s);
 
 	if ((error = gdrom_read_sectors(sc, bp->b_data, bp->b_rawblkno,
-	    bp->b_bcount >> 11))) {
+	    bp->b_bcount >> 11, &resid))) {
 		bp->b_error = error;
 		bp->b_flags |= B_ERROR;
 	}
 
 	sc->is_busy = 0;
 	wakeup(&sc->is_busy);
-
- done:
-	bp->b_resid = bp->b_bcount;
+	bp->b_resid = resid;
 	biodone(bp);
 }
 

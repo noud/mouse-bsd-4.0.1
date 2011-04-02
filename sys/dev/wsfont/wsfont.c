@@ -115,6 +115,16 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.43 2006/08/28 21:35:12 christos Exp $")
 #include <dev/wsfont/omron12x20.h>
 #endif
 
+#ifdef FONT_FIXED6x13
+#define HAVE_FONT 1
+#include <dev/wsfont/fixed6x13.h>
+#endif
+
+#ifdef FONT_MOUSE8x20
+#define HAVE_FONT 1
+#include <dev/wsfont/mouse8x20.h>
+#endif
+
 /* Make sure we always have at least one font. */
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
@@ -191,6 +201,12 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_OMRON12x20
 	{ { NULL, NULL }, &omron12x20, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_FIXED6x13
+       { { NULL, NULL }, &fixed6x13, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_MOUSE8x20
+       { { NULL, NULL }, &mouse8x20, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 	{ { NULL, NULL }, NULL, 0, 0, 0 },
 };

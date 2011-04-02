@@ -61,13 +61,13 @@ bpf_stats(void)
 	if (use_sysctl) {
 		if (sysctlbyname("net.bpf.stats", &bpf_s, &len, NULL, 0) == -1)
 			err(1, "net.bpf.stats");
-	
+
 		printf("bpf:\n");
-		printf("\t%" PRIu64 " total packets received\n", 
+		printf("\t%" PRIu64 " total packets received\n",
 		    bpf_s.bs_recv);
-		printf("\t%" PRIu64 " total packets captured\n", 
+		printf("\t%" PRIu64 " total packets captured\n",
 		    bpf_s.bs_capt);
-		printf("\t%" PRIu64 " total packets dropped\n", 
+		printf("\t%" PRIu64 " total packets dropped\n",
 		    bpf_s.bs_drop);
 	} else {
 		/* XXX */
@@ -86,7 +86,7 @@ bpf_dump(char *interface)
 		u_int	namelen;
 		void	*v;
 		struct kinfo_proc2 p;
-	
+
 		/* adapted from sockstat.c by Andrew Brown */
 
 		sz = CTL_MAXNAME;
@@ -96,7 +96,7 @@ bpf_dump(char *interface)
 
 		name[namelen++] = sizeof(*dpe);
 		name[namelen++] = INT_MAX;
-		
+
 		v = NULL;
 		sz = 0;
 		do {
@@ -123,19 +123,19 @@ bpf_dump(char *interface)
 #define BPFEXT(entry) dpe->entry
 
 		for (i = 0; i < (sz / sizeof(*dpe)); i++, dpe++) {
-			if (interface && 
+			if (interface &&
 			    strncmp(BPFEXT(bde_ifname), interface, IFNAMSIZ))
 				continue;
-			
+
 			printf("%-7d ", BPFEXT(bde_pid));
 			printf("%-7s ",
-			       (BPFEXT(bde_ifname)[0] == '\0') ? "-" : 
+			       (BPFEXT(bde_ifname)[0] == '\0') ? "-" :
 			       BPFEXT(bde_ifname));
 
-			printf("%-8" PRIu64 " %-8" PRIu64 " %-8" PRIu64 " ", 
-				BPFEXT(bde_rcount), BPFEXT(bde_dcount), 
+			printf("%-8" PRIu64 " %-8" PRIu64 " %-8" PRIu64 " ",
+				BPFEXT(bde_rcount), BPFEXT(bde_dcount),
 				BPFEXT(bde_ccount));
-			
+
 			switch (BPFEXT(bde_state)) {
 			case BPF_IDLE:
 				printf("I");
@@ -150,7 +150,7 @@ bpf_dump(char *interface)
 				printf("-");
 				break;
 			}
-			
+
 			printf("%c", BPFEXT(bde_promisc) ? 'P' : '-');
 			printf("%c", BPFEXT(bde_immediate) ? 'R' : '-');
 			printf("%c", BPFEXT(bde_seesent) ? 'S' : '-');
@@ -166,7 +166,7 @@ bpf_dump(char *interface)
 			name[namelen++] = szproc;
 			name[namelen++] = 1;
 
-			if (sysctl(&name[0], namelen, &p, &szproc, 
+			if (sysctl(&name[0], namelen, &p, &szproc,
 			    NULL, 0) == -1)
 				printf("-\n");
 			else

@@ -548,6 +548,7 @@ next:
 		buflen -= cnt;
 		resid -= cnt;
 		iov->iov_len -= cnt;
+		cp += cnt;
 		if (iov->iov_len == 0)
 			iov++;
 		else

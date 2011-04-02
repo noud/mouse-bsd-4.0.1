@@ -193,7 +193,7 @@ unixpr(off)
 				sun = (struct sockaddr_un *)&ki->ki_src;
 			}
 
-			unixdomainpr0(ki->ki_pcbaddr, ki->ki_type, 
+			unixdomainpr0(ki->ki_pcbaddr, ki->ki_type,
 				      ki->ki_rcvq, ki->ki_sndq,
 				      ki->ki_vnode, ki->ki_conn, ki->ki_refs,
 				      ki->ki_nextref, ki->ki_sockaddr, sun, remote);

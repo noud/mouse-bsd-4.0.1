@@ -189,7 +189,7 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 		u_long totused1 = totused/100;
 		totpct = (totused1 * 100)/totmem1;
 	}
-	
+
 	printf("%lu Kbytes allocated to network (%lu%% in use)\n",
 	    totmem / 1024, totpct);
 	printf("%lu requests for memory denied\n", mbstat.m_drops);

@@ -247,6 +247,7 @@ struct bpf_dltlist {
 };
 
 #ifdef _KERNEL
+#include <sys/mbuf.h>
 int	 bpf_validate(struct bpf_insn *, int);
 void	 bpf_tap(void *, u_char *, u_int);
 void	 bpf_mtap(void *, struct mbuf *);

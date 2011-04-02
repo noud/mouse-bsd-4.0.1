@@ -210,7 +210,7 @@ cltp_stats(off, name)
 	p(cltps_badlen,"\t%llu bad data length field%s\n");
 	p(cltps_badsum,"\t%llu bad checksum%s\n");
 
-#undef p	     
+#undef p
 }
 
 struct	tp_pcb tpcb;
@@ -284,12 +284,12 @@ iso_protopr1(kern_addr, istp)
 		}
 		printf( "%-5.5s %-6.6s %-6.6s  %-*.*s %-*.*s %s\n",
 			"Proto", "Recv-Q", "Send-Q",
-			width, width, "Local Address", 
+			width, width, "Local Address",
 			width, width, "Foreign Address", "(state)");
 		first = 0;
 	}
 	if (Aflag)
-		printf("%8lx ", 
+		printf("%8lx ",
 		    (u_long) (sockb.so_pcb ? (void *)sockb.so_pcb :
 		    (void *)kern_addr));
 	printf("%-5.5s %6ld %6ld ", "tp",
@@ -679,7 +679,7 @@ for (j = 0, tpfirst=1; group[j].text; j++) \
 	}
 
 
-	pgroup(tpstatpr_r, "%*sReceived:\n"); 
+	pgroup(tpstatpr_r, "%*sReceived:\n");
 	pgroup(tpstatpr_s, "%*sSending:\n");
 
 	pgroup(tpstatpr_m, "%*sMiscellaneous:\n");
@@ -735,8 +735,8 @@ for (j = 0, tpfirst=1; group[j].text; j++) \
 			    s->ts_rtv[j], s->ts_rtv[j]);
 		}
 	}
-	
-	
+
+
 	if (s->ts_tpdu_rcvd || s->ts_pkt_rcvd || s->ts_recv_drop ||
 	    s->ts_DT_rcvd || s->ts_AK_rcvd || s->ts_DR_rcvd || s->ts_CR_rcvd ||
 	    s->ts_XPD_rcvd || s->ts_XAK_rcvd || s->ts_DC_rcvd ||

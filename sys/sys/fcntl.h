@@ -45,9 +45,10 @@
  * related kernel definitions.
  */
 
+#include <sys/types.h>
+
 #ifndef _KERNEL
 #include <sys/featuretest.h>
-#include <sys/types.h>
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #include <sys/stat.h>
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */

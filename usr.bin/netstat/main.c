@@ -425,7 +425,7 @@ prepare(char *nlistf, char *memf, struct protox *tp)
 		(void)setgid(getgid());
 		if (kvmd == NULL)
 			err(1, "kvm error: %s", buf);
-	
+
 		if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
 			if (nlistf)
 				errx(1, "%s: no namelist", nlistf);
@@ -455,7 +455,7 @@ main(argc, argv)
 	pcbaddr = 0;
 
 	while ((ch = getopt(argc, argv,
-	    "AabBdf:ghI:LliM:mN:nP:p:qrsStuvw:")) != -1)
+	    "AabBdf:ghI:LliM:mN:nP:p:qQrsStTuvw:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -545,6 +545,9 @@ main(argc, argv)
 		case 'q':
 			qflag = 1;
 			break;
+		case 'Q':
+			Qflag = 1;
+			break;
 		case 'r':
 			rflag = 1;
 			break;
@@ -556,6 +559,9 @@ main(argc, argv)
 			break;
 		case 't':
 			tflag = 1;
+			break;
+		case 'T':
+			Tflag = 1;
 			break;
 		case 'u':
 			af = AF_LOCAL;
@@ -891,7 +897,7 @@ usage()
 	(void)fprintf(stderr,
 "usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n", progname);
 	(void)fprintf(stderr,
-"       %s [-bdgiLmnqrsSv] [-f address_family] [-M core] [-N system]\n", 
+"       %s [-bdgiLmnqrsSv] [-f address_family] [-M core] [-N system]\n",
 	progname);
 	(void)fprintf(stderr,
 "       %s [-dn] [-I interface] [-M core] [-N system] [-w wait]\n", progname);

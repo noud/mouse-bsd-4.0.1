@@ -1,4 +1,4 @@
-/*	$NetBSD: bill.c,v 1.7.26.1 2008/02/03 18:13:34 riz Exp $	 */
+/*	$NetBSD: bill.c,v 1.7 2003/08/07 09:37:22 agc Exp $	 */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)bill.c	5.2 (Berkeley) 5/28/91";
 #else
-__RCSID("$NetBSD: bill.c,v 1.7.26.1 2008/02/03 18:13:34 riz Exp $");
+__RCSID("$NetBSD: bill.c,v 1.7 2003/08/07 09:37:22 agc Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: bill.c,v 1.7.26.1 2008/02/03 18:13:34 riz Exp $");
 
 /* bill.c		 Larn is copyrighted 1986 by Noah Morgan. */
 
+#if SEND_WIN_EMAIL
 char *mail[] = {
 	"From: the LRS (Larn Revenue Service)\n",
 	"~s undeclared income\n",
@@ -113,20 +114,22 @@ char *mail[] = {
 	"\ncan be your everlasting reward.\n",
 	NULL
 };
+#endif
 
 /*
  * function to mail the letters to the player if a winner
  */
 
-void
-mailbill()
+void mailbill(void)
 {
+#if SEND_WIN_EMAIL
 	int    i;
 	char   fname[32];
 	char   buf[128];
 	char **cp;
 	int    fd;
 
+	if (autoflag) abort();
 	wait(0);
 	if (fork() == 0) {
 		resetscroll();
@@ -160,4 +163,5 @@ mailbill()
 		}
 	}
 	exit(0);
+#endif
 }

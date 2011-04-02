@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 2006/05/11 10:23:24 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -43,8 +43,8 @@ int cannedlevel(int);
 void treasureroom(int);
 void troom(int, int, int, int, int, int);
 void makeobject(int);
-void fillmroom(int, int, int);
-void froom(int, int, int);
+void fillmroom(int, char, int);
+void froom(int, char, int);
 int fillmonst(int);
 void sethp(int);
 void checkgen(void);
@@ -125,13 +125,16 @@ void retcont(void);
 int openhelp(void);
 
 /* io.c */
+int autoread(int, void *);
+void auto_report_score(int);
 void setupvt100(void);
 void clearvt100(void);
 int lgetchar(void);
 void scbr(void);
 void sncbr(void);
 void newgame(void);
-void lprintf(const char *, ...);
+void lprintf(const char *, ...)
+	__attribute__((__format__(__printf__,1,2)));
 void lprint(long);
 void lwrite(char *, int);
 long lgetc(void);
@@ -199,7 +202,7 @@ int isconfuse(void);
 int nospell(int, int);
 int fullhit(int);
 void direct(int, int, char *, int);
-void godirect(int, int, char *, int, int);
+void godirect(int, int, char *, int, char);
 void ifblind(int, int);
 void tdirect(int);
 void omnidirect(int, int, char *);

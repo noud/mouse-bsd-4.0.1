@@ -61,25 +61,489 @@ $NetBSD: usbdevs,v 1.443.2.7 2007/09/29 08:53:16 xtraeme Exp $
  * make the device recognised by the appropriate device driver.
  */
 
+/*
+Data from 2010-09-26 fetch which I haven't yet merged:
+
+0bdb Ericsson AB
+0be4 Elka International Ltd.
+0be6 Wonderful Photoelectricity (DongGuan), Co., Ltd.
+0bee LTK International Limited
+0c06 Hasbro, Inc.
+0c0b Dura Micro, Inc.
+0c24 Taiyo Yuden Co., Ltd.
+0c39 Aeroflex
+0c45 Sonix Technology Co., Ltd.
+0c56 Billion Bright Limited
+0c62 Chant Sincere Co., Ltd
+0c68 Whanam Electronics Co., Ltd.
+0c76 Solid State System Co., Ltd.
+0c89 Honda Tsushin Kogyo Co., Ltd
+0cad Motorola G&PS
+0cb7 Singatron Enterprise Co. Ltd.
+0cbb Shanghai Darong Electronics Co., Ltd.
+0cc4 emsys GmbH
+0cd9 Shin Din Cable Ltd.
+0cde Z-Com INC.
+0cf1 e-CONN ELECTRONIC CO., LTD.
+0cf2 ENE Technology Inc.
+0cf3 Atheros Communications, Inc.
+0d17 NALTEC, Inc.
+0d19 Hank Connection Industrial Co., Ltd.
+0d41 Ta Yun Electronic Technology Co., Ltd.
+0d4a NF Corporation
+0d4b Grape Systems Inc.
+0d51 Volex (Asia) Pte Ltd
+0d61 MEILU ELECTRONICS (SHENZHEN) CO., LTD.
+0d7c Taiwan Line Tek Electronic Co., Ltd.
+0d87 Dolby Laboratories Inc.
+0d8c C-MEDIA ELECTRONICS INC.
+0d8f Pitney Bowes
+0d9c Chee Chen Hi-Technology Co., Ltd.
+0da7 IOGEAR, Inc.
+0db0 Micro-Star International Co., Ltd.
+0dc4 inXtron, Inc.
+0dc5 SDK Co, Ltd.
+0dd1 Contek Electronics Co., Ltd.
+0dd2 Power Quotient International Co., Ltd.
+0dd4 Custom Engineering SPA
+0dea UTECH Electronic (D.G.) Co., Ltd.
+0e0f VMWare, Inc.
+0e17 Walex Electronic Ltd.
+0e23 Liou Yuane International Ltd.
+0e39 Smart Modular Technologies, Inc.
+0e3a Neostar Technology Co., Ltd.
+0e5b Union Power Information Industrial Co., Ltd.
+0e5d Neltron Industrial Co., Ltd.
+0e6a Megawin Technology Co., Ltd.
+0e72 Hsi-Chin Electronics Co., Ltd.
+0e8c Well Force Electronic Co., Ltd
+0e8d MediaTek Inc.
+0e9b ADTEC CORPORATION
+0ea0 Ours Technology Inc.
+0ea7 MSL Enterprises Corp.
+0eb2 Y-S ELECTRONIC CO., LTD.
+0ec2 Sweetray Industrial Ltd.
+0ec3 AXELL CO., LTD.
+0ec6 InnoVISION Multimedia Limited
+0ee4 Sunrich Technology (H.K.) Ltd.
+0f08 CSL Wire & Plug (Shen Zhen) Company
+0f2e Good Man Corporation
+0f32 YFC-BonEagle Electric Co., Ltd.
+0f38 Nien-Yi Industrial Corp.
+0f4c WORLDWIDE CABLE OPTO CORP.
+0f52 WING KEI ELECTRICAL CO., LTD.
+0f53 Taiyo Cable (Dongguan) Co. Ltd.
+0f54 Kawai Musical Instruments Mfg. Co., Ltd.
+0f60 NTK (GZ) Co., Ltd.
+0f68 TEPCO UQUEST, LTD.
+0f69 DIONEX CORPORATION
+0f8b Yazaki Corporation
+0f97 CviLux Corporation
+0fb0 Haurtian Wire & Cable Co., Ltd.
+0fb8 Wistron Corporation
+0fbb Bitwise Systems, Inc.
+0fce Sony Ericsson Mobile Communications AB
+0fe5 TC&C ELECTRONIC CO.,LTD (SUNTECC, INC.)
+0ff7 CHI SHING COMPUTER ACCESSORIES CO., LTD.
+1004 LG Electronics Inc.
+1026 Newly Corporation
+102f WENZHOU YIHUA COMMUNICATED CONNECTOR CO., LTD.
+1048 Targus Group International
+104c AMCO TEC International Inc.
+1057 ON Semiconductor
+1058 Western Digital Technologies, Inc.
+1059 Giesecke & Devrient GmbH
+105c Freeway Electronic Wire & Cable (Dongguan) Co., Ltd.
+1083 CANON ELECTRONICS INC.
+1084 PANTECH CO., LTD.
+108c Robert Bosch GmbH
+108e Lotes Co., Ltd.
+10aa Cables To Go
+10ae Princeton Technology Corp.
+10b8 DIBCOM
+10bb TM Technology Inc.
+10c4 Silicon Laboratories, Inc.
+10cd Kycon Inc.
+10d6 Actions Semiconductor Co., Ltd.
+1112 YM ELECTRIC CO., LTD.
+1113 Medion AG
+111d Centon Electronics
+111e VSO Electric Co., Ltd.
+112e Master Hill Electric Wire and Cable Co., Ltd.
+1130 Tenx Technology, Inc.
+1146 Shimane SANYO Electric Co., Ltd.
+114b Sphairon Technologies GmbH
+115b Salix Technology Co., Ltd.
+1175 Sheng Yih Technologies Co., Ltd.
+119a DONG GUAN JALINK ELECTRONICES CO.,LTD
+11a8 Hoeft & Wessel AG
+11b0 ATECH FLASH TECHNOLOGY
+11e6 K.I. Technology Co. Ltd.
+120e HUDSON SOFT CO., LTD.
+1219 COMPAL COMMUNICATIONS, INC.
+1223 SKYCABLE ENTERPRISE. CO., LTD.
+124b NYKO Technologies, Inc.
+125f ADATA Technology Co., Ltd.
+1262 MICRO VISION CO., LTD.
+126c Aristocrat Technologies
+126d Bel Stewart
+1286 MARVELL SEMICONDUCTOR, INC.
+1294 RISO KAGAKU CORP.
+12ab Honey Bee Electronic International Ltd.
+12b8 Zhejiang Xinya Electronic Technology Co., Ltd.
+12d2 LINE TECH INDUSTRIAL CO., LTD.
+132b Konica Minolta Holdings, Inc.
+1348 Katsuragawa Electric Co., Ltd.
+1370 Swissbit AG
+137d Pericom Semiconductor Corp.
+1396 Greenliant Systems, Inc.
+13ca JyeTai Precision Industrial Co., Ltd.
+13cf Wisair Ltd.
+13d1 A-Max Technology Macao Commercial Offshore Co. Ltd.
+13d3 AzureWave Technologies, Inc.
+13dc ALEREON, INC.
+13fd Initio Corporation
+13fe Phison Electronics Corp.
+140e Telechips, Inc.
+1410 Novatel Wireless, Inc.
+1419 ABILITY ENTERPRISE CO., LTD.
+1421 Sensor Technologies America, Inc.
+1429 Vega Technologies Industrial (Austria) Co.
+1436 Denali Software, Inc.
+143c Altek Corporation
+1461 Staccato Communications
+147a Formosa21 Inc.
+147e UPEK Inc.
+147f Hama GmbH & Co., KG
+148e EVATRONIX SA
+1497 Panstrong Company Ltd.
+14ad CTK Corporation
+14af ATP Electronics Inc.
+14b0 StarTech.com Ltd.
+14cd MOAI ELECTRONICS CORPORATION
+1500 Ellisys
+1516 Skymedi Corporation
+151c VeriSilicon Holdings Co., Ltd.
+152d JMicron Technology Corp.
+152e HLDS (Hitachi-LG Data Storage, Inc.)
+154b PNY Technologies Inc.
+154d ConnectCounty Holdings Berhad
+154e D & M Holdings, Inc.
+1568 Sunf Pu Technology Co., Ltd
+1570 ALLTOP TECHNOLOGY CO., LTD.
+157b Ketron SRL
+1586 Sitor Electronics (Shenzhen) Co., Ltd.
+15a2 Freescale Semiconductor, Inc.
+15aa Hong Kong Gearway Electronics Co., Ltd.
+15c9 D-Box Technologies
+15dc Hynix Semiconductor Inc.
+15e0 Seong Ji Industrial Co., Ltd.
+15ec Belcarra Technologies Corp.
+160d Samtec
+1612 Soft DB Inc.
+1660 Creatix Polymedia GmbH
+1679 Total Phase
+1682 Maxwise Production Enterprise Ltd.
+16a5 Shenzhen Zhengerya Technology Co., Ltd.
+16ac Dongguan ChingLung Wire & Cable Co., Ltd.
+16cc silex technology, Inc.
+1736 CANON IMAGING SYSTEMS INC.
+1748 MQP Electronics Ltd.
+174c ASMedia Technology Inc.
+1759 LucidPort Technology, Inc.
+1769 ARTEK Inc.
+176e UD electronic corp.
+1771 Shenzhen Alex Connector Co., Ltd.
+1772 System Level Solutions, Inc.
+1784 TopSeed Technology Corp.
+1788 ShenZhen Litkconn Technology Co., Ltd.
+1796 Printrex, Inc.
+17a5 Advanced Connection Technology Inc.
+17cf Hip Hing Cable & Plug Mfy. Ltd.
+17e9 DisplayLink (UK) Ltd.
+17ef Lenovo
+17f5 K.K. Rocky
+1898 Summit Microelectronics
+1899 Linkiss Co., Ltd.
+18d1 Google Inc.
+18e3 Fitilink Integrated Technology, Inc.
+18fa Kuang Ying Computer Equipment Co., Ltd.
+18fd FineArch Inc.
+1914 Alco Digital Devices Limited
+1915 Nordic Semiconductor ASA
+1922 Power 7 Technologies Corp.
+1930 Shenzhen Xianhe Technology Co., Ltd.
+1931 Ningbo Broad Telecommunication Co., Ltd.
+1949 Lab126
+1953 Ironkey Inc.
+1957 BIOS Corporation
+1967 CASIO HITACHI Mobile Communications Co., Ltd.
+1970 Dane-Elec Corp. USA
+1989 Nuconn Technology Corp.
+198d Fairchild Imaging
+199c Richnex Microelectronics Corporation
+199d Dexxon
+19cf Parrot SA
+19e1 WeiDuan Electronic Accessory (S.Z.) Co., Ltd.
+19e8 Industrial Technology Research Institute
+19f0 Jyh Woei Industrial Co., Ltd.
+1a0a USB-IF non-workshop
+1a35 Astec Power, a division of Emerson Network Power
+1a36 Biwin Technology Ltd.
+1a40 TERMINUS TECHNOLOGY INC.
+1a4a Silicon Image
+1a6e Global Unichip Corp.
+1a6f Sagem Orga GmbH
+1a74 Oberthur Technologies
+1a79 Bayer Health Care LLC
+1a7b Lumberg Connect GmbH
+1a8a Simula Technology Inc.
+1a8b SGS Taiwan Ltd.
+1aa6 eFortune Technology Corp.
+1aae Johnson Component & Equipments Co., Ltd.
+1acb Salcomp Plc
+1ad1 Desan Wire Co., Ltd.
+1aed High Top Precision Electronic Co., Ltd.
+1aee SHEN ZHEN REX TECHNOLOGY CO., LTD.
+1aef Octekconn Incorporation
+1b20 MStar Semiconductor, Inc.
+1b48 Plastron Precision Co., Ltd.
+1b59 K.S. Terminals Inc.
+1b5a Chao Zhou Kai Yuan Electric Co., Ltd.
+1b86 Dongguan Guanshang Electronics Co., Ltd.
+1b88 ShenMing Electron (Dong Guan) Co., Ltd.
+1b8e Amlogic, Inc.
+1b8f Super Talent Technology, Inc.
+1b96 N-Trig
+1b99 Shenzhen Yuanchuan Electronic
+1ba1 JINQ CHERN ENTERPRISE CO., LTD.
+1bc4 Ford Motor Co.
+1bce Contac Cable Industrial Limited
+1bcf Sunplus Innovation Technology Inc.
+1bf0 RealVision Inc.
+1bf6 Orient Semiconductor Electronics, Ltd.
+1c10 Lanterra Industrial Co., Ltd.
+1c22 ZHONGSHAN CHIANG YU ELECTRIC CO., LTD.
+1c27 SHENZHEN D&S INDUSTRIES LIMITED
+1c31 LS Mtron
+1c3d NONIN MEDICAL INC.
+1c6b Philips & Lite-ON Digital Solutions Corporation
+1c7b Shenzhen Luxshare Precision Industry Co., Ltd.
+1c8e ASTRON INTERNATIONAL CORP.
+1c98 ALPINE ELECTRONICS, INC.
+1ca1 Symwave, Inc.
+1cb3 Aces Electronics Co., Ltd.
+1cb4 OPEX CORPORATION
+1cbe Texas Instruments - Stellaris
+1cde Telecommunications Technology Association (TTA)
+1d08 NINGBO HENTEK DRAGON ELECTRONICS CO., LTD.
+1d0a Johnson Controls, Inc. The Automotive Business Unit
+1d29 Horng Tong Enterprise Co., Ltd.
+1d42 DRAGON JOY LIMITED
+1d43 Montage Technology, Inc.
+1d45 Qisda Corporation
+1d46 nSys Design Systems
+1d48 Shenzhen XinYonghui Precise Technology Co., Ltd.
+1d49 SHENZHEN LINKCONN ELECTRONICS CO., LTD.
+1d4d Pegatron Corporation
+1d5c Fresco Logic Inc.
+1d5d QIXING INDUSTRIAL (HK) CO.
+1d60 ASAP International Co., Ltd.
+1d69 Walta Electronic Co., Ltd.
+1d6b The Linux Foundation
+1d77 Yueqing Changling Electronic Instrument Corp., Ltd.
+1d78 CAMBRIDGE SEMICONDUCTOR LTD.
+1d79 Shenzhen My-Power Technology Co., Ltd.
+1d80 PLDA
+1da0 Parade Technologies, Inc.
+1dbe S.R.N. Corporation
+1dc2 Datalogic Mobile Inc.
+1dd8 BUFFALO KOKUYO SUPPLY INC.
+1ddf GDA Technologies, Inc.
+1df2 Telecommunication Metrology Center of MII
+1df4 SHEN ZHEN FORMAN PRECISION INDUSTRY CO., LTD.
+1e00 Jupiter Systems
+1e08 Inventure, Inc.
+1e10 Point Grey Research Inc.
+1e3a Continental Automotive Systems Inc.
+1e47 HUNG TA H.T.ENTERPRISE CO., LTD.
+1e4e Etron Technology, Inc.
+1e6d WAN SHIH ELECTRONIC (H.K.) CO., LTD.
+1e73 COMLINK ELECTRONICS CO., LTD.
+1e89 Vtion Information Technology (Fujian) Co., Ltd.
+1ea3 Concraft Holding Co., Ltd.
+1ea6 novero GmbH
+1eb7 WIN WIN PRECISION INDUSTRIAL CO., LTD.
+1ec9 MOSER BAER INDIA LIMITED
+1eda AIRTIES WIRELESS NETWORKS
+1edb BLACKMAGIC DESIGN PTY.
+1f12 Photometrics
+1f20 Shenzhen Tenwei Electronics Co., Ltd.
+1f28 Cal-Comp Electronics & Communications
+1f29 Analogix Semiconductor, Inc.
+1f31 SASKEN COMMUNICATION TECH LTD.
+1f35 Amphenol Shouh Min Industry
+1f3c Chang Yang Electronics Company Ltd.
+1f49 ITT Corporation
+1f5b KYODO COMMUNICATIONS & ELECTRONICS INC.
+1f75 Innostor Co., Ltd.
+1f7f NOVA Sensors
+1f80 MagicPixel Inc.
+1f89 Dongguan Goldconn Electronics Co., Ltd.
+1f8a Morning Star Industrial Co., Ltd.
+1fac DIFFON CORPORATION
+1fad Cresta Technology Inc.
+1fb4 Owl Computing Technologies, Inc.
+1fb5 Siemens Enterprise Communications GmbH & Co. KG
+1fc9 NXP Semiconductors
+1fec NIAN YEONG ENTERPRISE CO., LTD.
+2001 D-Link Corporation
+200d Belkin Electronic (Changzhou) Co., Ltd.
+201c Freeport Resources Enterprises Corp.
+2028 DETAS TECHNOLOGY LTD.
+202d Snowbush IP (a division of Gennum)
+205c Shenzhen Tronixin Electronics Co., Ltd.
+207d CESI Technology Co., Ltd.
+208e ICT-LANTO LIMITED
+2095 China Electronics Technology Limited
+2096 Microconn Electronic Co., Ltd.
+20af Shenzhen CARVE Electronics Co., Ltd.
+20c0 FENGHUA KINGSUN CO., LTD.
+20c2 Sumitomo Electric Ind., Ltd., Optical Comm. R&D Lab
+20d8 Changzhou Xinchao Technologies, Inc.
+20f0 Insight Technology Incorporated
+20f7 SOFTHARD Technology Ltd.
+20fd NOVO NORDISK A/S
+20fe Elektrobit Inc.
+2109 VIA Labs, Inc.
+212c Shenzhen Linoya Electronic Co., Ltd.
+212d Dong Guan City Marubeni Electronic Co., Ltd.
+212e Amphenol AssembleTech (Xiamen) Co., Ltd.
+2138 iVina, Inc.
+2147 Chin-Ban Electronics (Hong Kong) Co.
+2148 Visteon Sistemas Automotives Ltda.
+214c Y Soft Ltd.
+2156 Weistech Technology Co., Ltd.
+2157 Digital Imaging Technology
+2158 TA WEI TECHNOLOGY CO., LTD.
+2166 JVC KENWOOD Holdings, Inc.
+2167 Zhejiang Fousine Science & Technology Co., Ltd.
+2168 TZYR HWEY ENTERPRISE CO., LTD.
+2173 HUIZHOU HUANGJI PRECISIONS FLEX ELECTRONICAL CO., LTD.
+2174 Transcend Information, Inc.
+2175 Light Blue Optics, Inc.
+2176 TMC/Allion Test Labs  [see also 0ae3]
+2187 ESPACE SERVICES MULTIMEDIAS
+2188 CalDigit
+21aa TAKASAKI KYODO COMPUTING CENTER CO., LTD.
+21b3 Dongguan Teconn Electronics Technology Co., Ltd.
+21b5 SHENZHEN JASON ELECTRONICS CO., LTD.
+21c4 Netcom Technology (HK) Limited
+21d2 NeoLAB Convergence
+21d3 Compupack Technology Co., Ltd.
+21d4 Eduplayer Co., Ltd.
+21d9 Verification Technology, Inc.
+21da Valor Auto Companion, Inc.
+21db G-Max Technology Co., Ltd.
+21e9 Jiafuh Metal & Plastic (ShenZhen) Co., Ltd.
+21ea JUST MAKE ELECTRONICS CO., LTD.
+21f7 Wuerth-Elektronik eiSos GmbH & Co. KG
+2201 Elan Digital Systems Ltd.
+2202 Walex Electronic (Wu Xi) Co., Ltd.
+2203 Shin Shin Co., Ltd.
+2205 3eYamaichi Electronics Co., Ltd.
+2206 Wiretek International Investment Ltd.
+2207 Fuzhou Rockchip Electronics Co., Ltd.
+221e Linktec Technologies Co., Ltd.
+2234 T-CONN PRECISION CORPORATION
+2242 Zhihe Electronics Technology Co., Ltd.
+2250 Evernew Wire & Cable Co., Ltd.
+2251 QuieTek Corp.
+2252 TSANSUN TECH. CO., LTD.
+2259 Skypine Electronics (Shenzhen) Co., Ltd.
+2264 Entourage Systems, Inc.
+226f Koyo Trading Co., Ltd.
+2270 XiaMen GaoLuChang Electronics Co. Ltd.
+227f Granite River Labs
+2287 Shenzhen Oversea Win Technology Co., Ltd.
+2288 Digital EMC Co., Ltd.
+2289 Sun Fair Electric Wire & Cable (HK) Co., Ltd.
+228a Hotron Precision Electronic Ind. Corp.
+228b Shenzhen DLK Electronics Technology Co., Ltd.
+2297 Evolution Technology Corporation
+22a9 Valor Communication, Inc.
+22aa AppliedMicro
+22ab Trigence Semiconductor, Inc.
+22b8 Motorola MDS
+22c7 MEMUP
+22c8 Karming Electronic (Shenzhen) Co., Ltd.
+22db Phase One A/S
+22e4 Shenyang Tongzhen Precision Electronic Technology Co.
+22ff Avnet
+2313 Kunshan Jiahua Electronics Co., Ltd.
+2314 INQ Mobile Limited
+2315 Avery Design Systems, Inc.
+2316 DongGuan Potec Electric Industrial Co., Ltd.
+2317 Huawei Device Co., Ltd.
+2326 CHAO KUEI MOLD INDUSTRIAL CO., LTD.
+2330 Tensorcom
+2331 PUZZLE LOGIC INC.
+2344 HAMBURG INDUSTRIES CO., LTD.
+234c Zenverge Inc.
+234d Skype Inc.
+2358 Greenconn Corporation
+2359 Shenzhen Autone-Tronic Technology Co., Ltd.
+235a Top Yang Technology Enterprise Co., Ltd.
+235b KangXiang Electronic Co., Ltd.
+236c ZheJiang Chunsheng Electronics Co., Ltd.
+236d e-supplies Co., Ltd.
+2382 Trigaudio, Inc.
+3923 National Instruments
+413c Dell Inc.
+6000 TRIDENT MICROSYSTEMS (Far East) Ltd.
+636c CoreLogic, Inc.
+8086 Intel Corporation
+9710 Moschip Semiconductor Technology
+eb1a Empia Technology, Inc.
+*/
+
+/* Comments marked 2010-09-26 are data taken from
+   http://www.usb.org/developers/tools/comp_dump fetched 2010-09-26.
+   In most, they have simply been merged with the main line; the
+   ones that are in comments are the ones which conflicted. */
 vendor EGALAX2		0x0123	eGalax, Inc.
 vendor AOX		0x03e8	AOX
 vendor ATMEL		0x03eb	Atmel
 vendor MITSUMI		0x03ee	Mitsumi
 vendor HP		0x03f0	Hewlett Packard
 vendor ADAPTEC		0x03f3	Adaptec
+vendor DIEBOLD		0x03f4	Diebold
+vendor ELITEGROUP	0x03fc	Elitegroup Computer Systems
 vendor NATIONAL		0x0400	National Semiconductor
 vendor ACERLABS		0x0402	Acer Labs
 vendor FTDI		0x0403	Future Technology Devices
+vendor QUANTA		0x0408	Quanta Computer
 vendor NEC		0x0409	NEC
 vendor KODAK		0x040a	Eastman Kodak
+vendor WELTREND		0x040b	Weltrend Semiconductor
+vendor VIATECH		0x040d	VIA Technologies
+vendor MCCI		0x040e	MCCI
+/* 2010-09-26 0411 BUFFALO INC. */
 vendor MELCO		0x0411	Melco
+/* 2010-09-26 GIGABYTE was already taken for 0x1044,
+   but 0x1044=4164 is not present in the 2010-09-26 list. */
+vendor GIGABYTE2	0x0414	Giga-Byte Technology
 vendor CREATIVE		0x041e	Creative Labs
 vendor NOKIA		0x0421	Nokia
 vendor ADI		0x0422	ADI Systems
 vendor CATC		0x0423	Computer Access Technology
 vendor SMC2		0x0424	Standard Microsystems
+vendor INTEGRATED	0x0426	Integrated Device Technology
 vendor GRAVIS		0x0428	Advanced Gravis Computer
+vendor MOLEX		0x042f	Molex Inc.
+/* 2010-09-26 0430 Fujitsu Component Limited */
 vendor SUN		0x0430	Sun Microsystems
+vendor UNISYS		0x0432	Unisys
 vendor TAUGA		0x0436	Taugagreining HF
 vendor AMD		0x0438	Advanced Micro Devices
 vendor LEXMARK		0x043d	Lexmark International
@@ -91,9 +555,12 @@ vendor ANALOGDEVICES	0x0456	Analog Devices
 vendor SIS		0x0457	Silicon Integrated Systems
 vendor KYE		0x0458	KYE Systems
 vendor DIAMOND2		0x045a	Diamond (Supra)
+vendor RENESAS		0x045b	Renesas Electronics
 vendor MICROSOFT	0x045e	Microsoft
 vendor PRIMAX		0x0461	Primax Electronics
+vendor EATON		0x0463	EATON
 vendor AMP		0x0464	AMP
+vendor WEISON		0x0468	Wieson Technologies
 vendor CHERRY		0x046a	Cherry Mikroschalter
 vendor MEGATRENDS	0x046b	American Megatrends
 vendor LOGITECH		0x046d	Logitech
@@ -101,11 +568,17 @@ vendor BTC		0x046e	Behavior Tech. Computer
 vendor PHILIPS		0x0471	Philips
 vendor SANYO		0x0474	Sanyo Electric
 vendor CONNECTIX	0x0478	Connectix
+vendor SEMTECH		0x047a	Semtech Corporation
 vendor KENSINGTON	0x047d	Kensington
 vendor LUCENT		0x047e	Lucent
 vendor PLANTRONICS	0x047f	Plantronics
+/* 2010-09-26 TOSHIBAAM was already taken for 0x04c6
+   but 0x04c6=1222 is not present in the 2010-09-26 list. */
+vendor TOSHIBAAM2	0x0480	Toshiba America Info. Systems
 vendor KYOCERA		0x0482	Kyocera
 vendor STMICRO		0x0483	STMicroelectronics
+vendor FOXCONN		0x0489	Foxconn / Hon Hai
+vendor ITETECH		0x048d	ITE Tech
 vendor YAMAHA		0x0499	YAMAHA
 vendor COMPAQ		0x049f	Compaq
 vendor HITACHI		0x04a4	Hitachi
@@ -113,8 +586,11 @@ vendor ACERP		0x04a5	Acer Peripherals
 vendor VISIONEER	0x04a7	Visioneer
 vendor CANON		0x04a9	Canon
 vendor NIKON		0x04b0	Nikon
+vendor PAN		0x04b1	Pan International
 vendor IBM		0x04b3	IBM
 vendor CYPRESS		0x04b4	Cypress Semiconductor
+vendor ROHM		0x04b5	ROHM
+vendor COMPAL		0x04b7	Compal Electronics
 vendor EPSON		0x04b8	Seiko Epson
 vendor RAINBOW		0x04b9	Rainbow Technologies
 vendor IODATA		0x04bb	I-O Data
@@ -129,46 +605,68 @@ vendor MICROMACRO	0x04c7	Micro Macro Technologies
 vendor KONICA		0x04c8	Konica
 vendor LITEON		0x04ca	Lite-On Technology
 vendor FUJIPHOTO	0x04cb	Fuji Photo Film
+/* 2010-09-26 04cc ST-Ericsson */
 vendor PHILIPSSEMI	0x04cc	Philips Semiconductors
 vendor TATUNG		0x04cd	Tatung Co. Of America
 vendor SCANLOGIC	0x04ce	ScanLogic
 vendor MYSON		0x04cf	Myson Technology
 vendor DIGI2		0x04d0	Digi
-vendor HOLTEK		0x04d9	Holtek Semiconductor
 vendor ITTCANON		0x04d1	ITT Canon
 vendor ALTEC		0x04d2	Altec Lansing
+vendor MENTOR		0x04d6	Mentor Graphics
+vendor MICROCHIP	0x04d8	Microchip Technology
+vendor HOLTEK		0x04d9	Holtek Semiconductor
 vendor PANASONIC	0x04da	Panasonic (Matsushita)
 vendor SHARP		0x04dd	Sharp
 vendor IIYAMA		0x04e1	Iiyama
+vendor EXAR		0x04e2	Exar Corporation
+/* 2010-09-26 04e6 SCM Microsystems */
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor SAMSUNG		0x04e8	Samsung Electronics
+vendor NORTHSTAR	0x04eb	Northstar Systems
+vendor TOKYO		0x04ec	Tokyo Electron Device Limited
 vendor ANNABOOKS	0x04ed	Annabooks
 vendor JVC		0x04f1	JVC
 vendor CHICONY		0x04f2	Chicony Electronics
+vendor NEWNEX		0x04f7	Newnex Technology
 vendor BROTHER		0x04f9	Brother Industries
 vendor DALLAS		0x04fa	Dallas Semiconductor
+/* 2010-09-26 04fc SUNPLUS TECHNOLOGY CO., LTD. */
 vendor AIPTEK2		0x04fc	AIPTEK International
+vendor PFU		0x04fe	PFU Limited
+vendor FUJIKURA		0x0501	Fujikura/DDK
 vendor ACER		0x0502	Acer
 vendor 3COM		0x0506	3Com
 vendor HOSIDEN		0x0507	Hosiden Corporation
 vendor AZTECH		0x0509	Aztech Systems
 vendor BELKIN		0x050d	Belkin Components
 vendor KAWATSU		0x050f	Kawatsu Semiconductor
+vendor FCI		0x0514	FCI Electronics
+vendor LONGWELL		0x0516	Longwell Electronics
 vendor COMPOSITE	0x0518	Composite
+vendor STARMICRONICS	0x0519	Star Micronics
 vendor APC		0x051d	American Power Conversion
+vendor TAIWAN		0x0520	Taiwan Semiconductor Manufacturing
 vendor CONNECTEK	0x0522	Advanced Connectek USA
+/* 2010-09-26 0525 PLX Technology, Inc. */
 vendor NETCHIP		0x0525	NetChip Technology
 vendor ALTRA		0x0527	ALTRA
 vendor ATI		0x0528	ATI Technologies
 vendor AKS		0x0529	Aladdin Knowledge Systems
+/* 2010-09-26 WACOM was already taken for 0x056a,
+   which is also present in the 2010-09-26 list. */
+vendor WACOM2		0x0531	Wacom Technology
+vendor SYNOPSYS		0x053f	Synopsys
 vendor UNIACCESS	0x0540	Universal Access
 vendor VIEWSONIC	0x0543	ViewSonic
 vendor XIRLINK		0x0545	Xirlink
 vendor ANCHOR		0x0547	Anchor Chips
 vendor SONY		0x054c	Sony
+vendor FUJIXEROX	0x0550	Fuji Xerox
 vendor VISION		0x0553	VLSI Vision
 vendor ASAHIKASEI	0x0556	Asahi Kasei Microsystems
 vendor ATEN		0x0557	ATEN International
+vendor CADENCE		0x0559	Cadence Design Systems
 vendor MUSTEK		0x055f	Mustek Systems
 vendor TELEX		0x0562	Telex Communications
 vendor PERACOM		0x0565	Peracom Networks
@@ -177,6 +675,8 @@ vendor WACOM		0x056a	WACOM
 vendor ETEK		0x056c	e-TEK Labs
 vendor EIZO		0x056d	EIZO
 vendor ELECOM		0x056e	Elecom
+vendor CONEXANT		0x0572	Conexant Systems
+/* 2010-09-26 0573 Zoran Corporation */
 vendor HAUPPAUGE	0x0573	Hauppauge Computer Works
 vendor BAFO		0x0576	BAFO/Quality Computer Accessories
 vendor YEDATA		0x057b	Y-E Data
@@ -186,7 +686,9 @@ vendor ROLAND		0x0582	Roland
 vendor ROCKFIRE		0x0583	Rockfire
 vendor RATOC		0x0584	RATOC Systems
 vendor ZYXEL		0x0586	ZyXEL Communication
+vendor INFINEON		0x058b	Infineon Technologies
 vendor ALCOR		0x058f	Alcor Micro
+vendor OMRON		0x0590	OMRON Corporation
 vendor IOMEGA		0x059b	Iomega
 vendor ATREND		0x059c	A-Trend Technology
 vendor AID		0x059d	Advanced Input Devices
@@ -194,8 +696,17 @@ vendor LACIE		0x059f	LaCie
 vendor OMNIVISION	0x05a9	OmniVision
 vendor INSYSTEM		0x05ab	In-System Design
 vendor APPLE		0x05ac	Apple Computer
+vendor YCCABLE		0x05ad	Y.C. Cable U.S.A.
+vendor TYCO		0x05be	Tyco Electronics
+/* 2010-09-26 is this the same company as 0x05e9? */
+vendor KAWASAKI		0x05c1	Kawasaki Microelectronics
 vendor DIGI		0x05c5	Digi International
+/* 2010-09-26 QUALCOMM was already taken for 0x1004
+   but 0x1004=4100 is "LG Electronics Inc." in the 2010-09-26 list. */
+vendor QUALCOMM2	0x05c6	Qualcomm, Inc
 vendor QTRONIX		0x05c7	Qtronix
+vendor FOXLINKCHENG	0x05c8	Foxlink/Cheng Uei Precision Industry
+vendor RICOH		0x05ca	Ricoh
 vendor ELSA		0x05cc	ELSA
 vendor BRAINBOXES	0x05d1	Brainboxes Limited
 vendor ULTIMA		0x05d8	Ultima
@@ -212,24 +723,51 @@ vendor KLSI		0x05e9	Kawasaki LSI
 vendor FFC		0x05eb	FFC
 vendor ANKO		0x05ef	Anko Electronic
 vendor PIENGINEERING	0x05f3	P.I. Engineering
+vendor UNIXTAR		0x05f5	Unixtar Technology
 vendor AOC		0x05f6	AOC International
+vendor DATALOGICSCAN	0x05f9	Datalogic Scanning
 vendor CHIC		0x05fe	Chic Technology
+vendor LECROY		0x05ff	LeCroy Corporation
 vendor BARCO		0x0600	Barco Display Systems
+vendor NOVATEK		0x0603	Novatek Microelectronics
 vendor BRIDGE		0x0607	Bridge Information
+vendor SMK		0x0609	SMK Manufacturing
 vendor SOLIDYEAR	0x060b	Solid Year
+vendor JOINSOON		0x060f	Joinsoon Electronics
+vendor TOTOKU		0x0611	Totoku Electric
+vendor TRANSACT		0x0613	TransAct Technologies
 vendor BIORAD		0x0614	Bio-Rad Laboratories
 vendor MACALLY		0x0618	Macally
+vendor SEIKO		0x0619	Seiko Instruments
 vendor ACTLABS		0x061c	Act Labs
 vendor ALARIS		0x0620	Alaris
-vendor CREATIVE3	0x062a	Creative Labs
+vendor LITTELFUSE	0x0623	Littelfuse
 vendor APEX		0x0624	Apex
+vendor CREATIVE3	0x062a	Creative Labs
+vendor MAINSUPER	0x062e	MAIN SUPER ENTERPRISES
 vendor VIVITAR		0x0636	Vivitar
 vendor AVISION		0x0638	Avision
+vendor CHRONTEL		0x0639	Chrontel
 vendor TEAC		0x0644	TEAC
-vendor ARKMICROCHIPS	0x6547	ArkMicroChips
+/* 2010-09-26 ANALOGDEVICES was already taken for 0x0456
+   but 0x0456=1110 is not present in the 2010-09-26 list. */
+vendor ANALOGDEVICES2	0x064b	Analog Devices, Inc. Development Tools
+vendor JIHAW		0x064c	Ji-Haw Industrial
+vendor SUYIN		0x064e	Suyin Corporation
+vendor WIBU		0x064f	WIBU-Systems AG
+vendor SPACESHUTTLE	0x0655	Space Shuttle Hi-Tech
+vendor GLORYMARK	0x0656	Glory Mark Electronic
+vendor TEKCON		0x0657	Tekcon Electronics
+vendor SIGMA		0x0658	Sigma Designs
 vendor SGI		0x065e	Silicon Graphics
+/* 2010-09-26 GOODWAY was already taken for 0x1631,
+   but 0x1631=5681 is not present in the 2010-09-26 list. */
+vendor GOODWAY2		0x065f	Good Way Technology
+vendor TSAYE		0x0660	TSAY-E (BVI) International
+vendor HAMAMATSU	0x0661	Hamamatsu Photonics
 vendor SANWASUPPLY	0x0663	Sanwa Supply
 vendor LINKSYS		0x066b	Linksys
+vendor TOTALTECH	0x066a	Total Technologies
 vendor ACERSA		0x066e	Acer Semiconductor America
 vendor SIGMATEL		0x066f	Sigmatel
 vendor AIWA		0x0677	Aiwa
@@ -240,16 +778,31 @@ vendor AVANCELOGIC	0x0680	Avance Logic
 vendor SIEMENS2		0x0681	Siemens
 vendor MINOLTA		0x0686	Minolta
 vendor CHPRODUCTS	0x068e	CH Products
+vendor GOLDENBRIDGE	0x0690	Golden Bridge Electech
 vendor HAGIWARA		0x0693	Hagiwara Sys-Com
 vendor CTX		0x0698	Chuntex
+vendor TEKTRONIX	0x0699	Tektronix
 vendor ASKEY		0x069a	Askey Computer
 vendor SAITEK		0x06a3	Saitek
+vendor XIAMENDOOWELL	0x06a4	Xiamen Doowell
+vendor GREATLAND	0x06ad	Greatland Electronics Taiwan
+vendor TESTRONIC	0x06ae	Testronic Labs
+vendor PIXELA		0x06b8	Pixela Corporation
 vendor ALCATELT		0x06b9	Alcatel Telecom
+vendor OKIDATA		0x06bc	Oki Data Corporation
 vendor AGFA		0x06bd	AGFA-Gevaert
 vendor ASIAMD		0x06be	Asia Microelectronic Development
+vendor LEOCO		0x06bf	Leoco Corporation
 vendor BIZLINK		0x06c4	Bizlink International
+/* 2010-09-26 SIIG was already taken for 0x07cc;
+   SIIG2 was already taken for 0x0b39.  0x07cc=1996 is present
+   in the 2010-09-26 list under another name (see its entry, below);
+   0x0b39=2873 is not present. */
+vendor SIIG3		0x06c8	SIIG
 vendor KEYSPAN		0x06cd	Keyspan
+vendor MITSUBISHI	0x06d3	Mitsubishi
 vendor AASHIMA		0x06d6	Aashima Technology
+vendor HEISEI		0x06de	Heisei Electronics
 vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies
 vendor ALCATELM		0x06e4	Alcatel Microelectronics
@@ -258,20 +811,30 @@ vendor GUILLEMOT	0x06f8	Guillemot
 vendor BOSTON		0x06fd	Boston Acoustics
 vendor SMC		0x0707	Standard Microsystems
 vendor PUTERCOM		0x0708	Putercom
+vendor OKIELECTRIC	0x070a	Oki Electric Industry
+vendor EXCELCELL	0x070e	Excel Cell Electronic
 vendor MCT		0x0711	MCT
 vendor IMATION		0x0718	Imation
+vendor SUNIX		0x072e	Sunix
 vendor SUSTEEN		0x0731	Susteen
 vendor EICON		0x0734	Eicon Networks
+vendor LOROM		0x0736	Lorom Industrial
 vendor DIGITALSTREAM	0x074e	Digital Stream
 vendor AUREAL		0x0755	Aureal Semiconductor
 vendor MIDIMAN		0x0763	Midiman
+vendor CYBERPOWER	0x0764	Cyber Power Systems
+vendor JESSLINK		0x0766	Jess-Link Products
 vendor SURECOM		0x0769	Surecom Technology
+vendor HIDGLOBAL	0x076b	HID Global GmbH
+vendor COMDA		0x0777	Comda Advanced Technology Corporation
+vendor FAIRCHILDSEMI	0x0779	Fairchild Semiconductor
 vendor LINKSYS2		0x077b	Linksys
 vendor GRIFFIN		0x077d	Griffin Technology
 vendor SANDISK		0x0781	SanDisk
 vendor JENOPTIK		0x0784	Jenoptik
 vendor LOGITEC		0x0789	Logitec
 vendor BRIMAX		0x078e	Brimax
+vendor COPARTNER	0x0791	Copartner Technology Corporation
 vendor AXIS		0x0792	Axis Communications
 vendor ABL		0x0794	ABL Electronics
 vendor SUNCOMM		0x079c	Sun Communications, Inc.
@@ -284,14 +847,18 @@ vendor COREGA		0x07aa	Corega
 vendor FREECOM		0x07ab	Freecom
 vendor MICROTECH	0x07af	Microtech
 vendor GENERALINSTMNTS	0x07b2	General Instruments (Motorola)
+vendor PLUSTEK		0x07b3	Plustek
 vendor OLYMPUS		0x07b4	Olympus
+vendor TIMEINTERCONN	0x07b7	TIME Interconnect
 vendor ABOCOM		0x07b8	AboCom Systems
 vendor KEISOKUGIKEN	0x07c1	Keisokugiken
+/* 2010-09-26 07c4 Datafab Systems Inc. */
 vendor ONSPEC		0x07c4	OnSpec
 vendor APG		0x07c5	APG Cash Drawer
 vendor BUG		0x07c8	B.U.G.
 vendor ALLIEDTELESYN	0x07c9	Allied Telesyn International
 vendor AVERMEDIA	0x07ca	AVerMedia Technologies
+/* 2010-09-26 07cc Carry Technology Co., Ltd. */
 vendor SIIG		0x07cc	SIIG
 vendor CASIO		0x07cf	CASIO
 vendor DLINK2		0x07d1	D-Link
@@ -299,13 +866,18 @@ vendor APTIO		0x07d2	Aptio Products
 vendor ARASAN		0x07da	Arasan Chip Systems
 vendor ALLIEDCABLE	0x07e6	Allied Cable
 vendor STSN		0x07ef	STSN
+vendor CIRCUITASSY	0x07f6	Circuit Assembly Corp
+vendor CENTURY		0x07f7	Century Corporation
+vendor DOTOP		0x07f9	Dotop Technology
 vendor ZOOM		0x0803	Zoom Telephonics
+vendor EVERMUCH		0x080a	Evermuch Technology
 vendor BROADLOGIC	0x0827	BroadLogic
 vendor HANDSPRING	0x082d	Handspring
 vendor PALM		0x0830	Palm Computing
 vendor SOURCENEXT	0x0833	SOURCENEXT
 vendor ACTIONSTAR	0x0835	Action Star Enterprise
 vendor ACCTON		0x083a	Accton Technology
+vendor ARGOSY		0x0840	Argosy Research
 vendor DIAMOND		0x0841	Diamond
 vendor NETGEAR		0x0846	BayNETGEAR
 vendor ACTIVEWIRE	0x0854	ActiveWire
@@ -313,76 +885,134 @@ vendor BBELECTRONICS	0x0856	B&B Electronics
 vendor PORTGEAR		0x085a	PortGear
 vendor NETGEAR2		0x0864	Netgear
 vendor SYSTEMTALKS	0x086e	System Talks
+vendor MECIMEX		0x086f	MEC IMEX INC/HPT
 vendor METRICOM		0x0870	Metricom
+vendor ATEC		0x0874	A-Tec Subsystem
 vendor ADESSOKBTEK	0x087c	ADESSO/Kbtek America
 vendor JATON		0x087d	Jaton
 vendor APT		0x0880	APT Technologies
 vendor BOCARESEARCH	0x0885	Boca Research
+vendor ICRON		0x089d	Icron Technologies
 vendor ANDREA		0x08a8	Andrea Electronics
+vendor RADIOSHACK	0x08b9	RadioShack Corporation
+/* 2010-09-26 08bb Texas Instruments Japan */
 vendor BURRBROWN	0x08bb	Burr-Brown Japan
+vendor TAITWUN		0x08c7	TAI TWUN
 vendor 2WIRE		0x08c8	2Wire
 vendor AIPTEK		0x08ca	AIPTEK International
 vendor SMARTBRIDGES	0x08d1	SmartBridges
 vendor BILLIONTON	0x08dd	Billionton Systems
+vendor PIONEER		0x08e4	Pioneer Corporation
+vendor GEMALTO		0x08e6	Gemalto SA
 vendor EXTENDED		0x08e9	Extended Systems
 vendor MSYSTEMS		0x08ec	M-Systems
 vendor AUTHENTEC	0x08ff	AuthenTec
+vendor FARADAY		0x0906	FARADAY Technology
 vendor AUDIOTECHNICA	0x0909	Audio-Technica
 vendor TRUMPION		0x090a	Trumpion Microelectronics
+vendor SILICONMOTION	0x090c	Silicon Motion
 vendor ALATION		0x0910	Alation Systems
 vendor CONCORDCAMERA	0x0919	Concord Camera
+vendor GARMIN		0x091e	Garmin International
 vendor GOHUBS		0x0921	GoHubs
+vendor DYMO		0x0922	Dymo Corporation
 vendor BIOMETRIC	0x0929	American Biometric Company
 vendor TOSHIBA		0x0930	Toshiba
+vendor PIXART		0x093a	Pixart Imaging
 vendor PLEXTOR		0x093b	Plextor
 vendor INTREPIDCS	0x093c	Intrepid
+vendor JST		0x093e	J.S.T. Mfg
 vendor YANO		0x094f	Yano
 vendor KINGSTON		0x0951	Kingston Technology
+vendor NVIDIA		0x0955	NVIDIA
+/* 2010-09-26 0956 BSquare Corporation */
 vendor BLUEWATER	0x0956	BlueWater Systems
 vendor AGILENT		0x0957	Agilent Technologies
 vendor PORTSMITH	0x095a	Portsmith
+vendor MEDIALOGIC	0x095b	Medialogic
+vendor POLYCOM		0x095d	Polycom
 vendor ACERW		0x0967	Acer
 vendor ADIRONDACK	0x0976	Adirondack Wire & Cable
 vendor BECKHOFF		0x0978	Beckhoff
 vendor MINDSATWORK	0x097a	Minds At Work
+vendor APRICORN		0x0984	Apricorn
+vendor CONTECH		0x09a4	Contech Research
 vendor POINTCHIPS	0x09a6	PointChips
+vendor LINSHIUNG	0x09a8	Lin Shiung
 vendor INTERSIL		0x09aa	Intersil
+vendor JAPANCASH	0x09ab	Japan Cash Machine
 vendor ALTIUS		0x09b3	Altius Solutions
 vendor ARRIS		0x09c1	Arris Interactive
+vendor NISCA		0x09c2	NISCA Corporation
 vendor ACTIVCARD	0x09c3	ACTIVCARD
 vendor ACTISYS		0x09c4	ACTiSYS
+vendor WORKBIT		0x09cc	Workbit
+vendor ELECTEST		0x09cf	Electronics Testing Center
 vendor NOVATEL		0x09d7	NovAtel
+vendor JUNGO		0x09d9	Jungo
 vendor AFOURTECH	0x09da	A-FOUR TECH
 vendor AIMEX		0x09dc	AIMEX
 vendor ADDONICS		0x09df	Addonics Technologies
+vendor JODAN		0x09e5	Jo-Dan International
 vendor AKAI		0x09e8	AKAI professional M.I.
 vendor ARESCOM		0x09f5	ARESCOM
 vendor BAY		0x09f9	Bay Associates
+vendor MTEK		0x09fa	Mtek Vision
 vendor ALTERA		0x09fb	Altera
 vendor CSR		0x0a12	Cambridge Silicon Radio
 vendor TREK		0x0a16	Trek Technology
+/* 2010-09-26 0a17 HOYA Corporation */
 vendor ASAHIOPTICAL	0x0a17	Asahi Optical
+vendor MEDTRONIC	0x0a21	Medtronic Physio Control
 vendor BOCASYSTEMS	0x0a43	Boca Systems
+/* 2010-09-26 HIROSE was already taken for 0x2631,
+   but 0x2631=9777 is not present in the 2010-09-26 list. */
+vendor HIROSE2		0x0a47	Hirose Electric
+/* 2010-09-26 0a48 I/O Interconnect */
 vendor MEDIAGEAR	0x0a48	MediaGear
+vendor COMPUTEX		0x0a4c	COMPUTEX
+vendor MIMAKI		0x0a50	Mimaki Engineering
 vendor BROADCOM		0x0a5c	Broadcom
-vendor GREENHOUSE	0x0a6b	GREENHOUSE
+vendor GREENHOUSE	0x0a6b	Green House
 vendor GEOCAST		0x0a79	Geocast Network Systems
+vendor INTERTEK		0x0a7d	Intertek NSTL
+vendor CHESEN		0x0a81	CHESEN ELECTRONICS
+vendor JAE		0x0a8e	Japan Aviation Electronics
+vendor YOUNGCHANG	0x0a8f	Young Chang
+vendor WINCORNIXDORF	0x0aa7	Wincor Nixdorf
+/* 2010-09-26 SANYO was already taken for 0x0474,
+   which is present in the 2010-09-26 list as "Sanoy Electric Co. Ltd.". */
+vendor SANYOSEMI	0x0ac3	SANYO Semiconductor Company
+vendor VIMICRO		0x0ac8	Vimicro Corporation
 vendor ZYDAS		0x0ace	Zydas Technology Corporation
+vendor ALLION		0x0ae3	Allion Test Labs
 vendor NEODIO		0x0aec	Neodio
-vendor OPTIONNV		0x0af0	Option N.V:
-vendor ASUSTEK		0x0b05	ASUSTeK Computer
+vendor OPTIONNV		0x0af0	Option NV
+vendor INGENICO		0x0b00	INGENICO
+vendor ASUSTEK		0x0b05	ASUSTek Computer
 vendor TODOS		0x0b0c	Todos Data System
+vendor EWA		0x0b1e	Electronic Warfare Assoc
+vendor YOKOGAWA		0x0b21	Yokogawa Electric
+vendor PANASIA		0x0b23	Pan-Asia Electronics
 vendor SIIG2		0x0b39	SIIG
 vendor TEKRAM		0x0b3b	Tekram Technology
+vendor OLIVETTI		0x0b3c	Olivetti
 vendor HAL		0x0b41	HAL Corporation
 vendor EMS		0x0b43	EMS Production
+vendor MUSICALELECT	0x0b4e	Musical Electronics
+vendor SINBON		0x0b54	Sinbon Electronics
+vendor HANWANG		0x0b57	Hanwang Technology
 vendor NEC2		0x0b62	NEC
+vendor MAXIM		0x0b6a	Maxim Integrated Products
 vendor ATI2		0x0b6f	ATI
 vendor ZEEVO		0x0b7a	Zeevo, Inc.
 vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
 vendor ASIX		0x0b95	ASIX Electronics
 vendor O2MICRO		0x0b97	O2 Micro
 vendor USR		0x0baf	U.S. Robotics
+vendor HTC		0x0bb4	HTC Corporation
+vendor MURATA		0x0bb5	Murata Manufacturing
+vendor SEAGATE		0x0bc2	Seagate
 vendor REALTEK		0x0bda	Realtek
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor AGATE		0x0c08	Agate Technologies
@@ -476,6 +1106,7 @@ vendor AVERATEC		0x50c2	Averatec
 vendor ONSPEC2		0x55aa	OnSpec Electronic Inc.
 vendor ZINWELL		0x5a57	Zinwell
 vendor SITECOM		0x6189	Sitecom
+vendor ARKMICROCHIPS	0x6547	ArkMicroChips
 vendor INTEL		0x8086	Intel
 vendor MOSCHIP		0x9710	MosChip Semiconductor
 vendor HP2		0xf003	Hewlett Packard
@@ -1736,6 +2367,9 @@ product RATOC REXUSB60		0xb000	USB serial REX-USB60
 
 /* Realtek products */
 product REALTEK RTL8150L	0x8150	Realtek RTL8150L USB-Ethernet Bridge
+
+/* Ricoh products */
+product RICOH RDC_5300		0x0101	RDC-5300 Camera
 
 /* Roland products */
 product ROLAND UA100		0x0000	UA-100 USB Audio I/F

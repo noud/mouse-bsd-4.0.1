@@ -51,9 +51,11 @@ int	nflag;		/* same as above, for show.c compat */
 int	Pflag;		/* dump a PCB */
 int	pflag;		/* show given protocol */
 int	qflag;		/* show softintrq */
+int	Qflag;		/* just data, no headers */
 int	rflag;		/* show routing tables (or routing stats) */
 int	sflag;		/* show protocol statistics */
 int	tflag;		/* show i/f watchdog timers */
+int	Tflag;		/* show i/f traffic values */
 int	vflag;		/* verbose route information or don't truncate names */
 
 int	interval;	/* repeat interval for i/f stats */
@@ -135,7 +137,7 @@ char	*netname4(in_addr_t, in_addr_t);
 /* char	*netname __P((u_int32_t, u_int32_t)); */
 #ifdef INET6
 char	*netname6 __P((struct sockaddr_in6 *, struct sockaddr_in6 *));
-#endif 
+#endif
 char	*atalk_print __P((const struct sockaddr *, int));
 char	*atalk_print2 __P((const struct sockaddr *, const struct sockaddr *,
     int));

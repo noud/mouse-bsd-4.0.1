@@ -129,6 +129,8 @@ static u_int packets_captured;
 
 /* Length of saved portion of packet. */
 int snaplen = DEFAULT_SNAPLEN;
+/* Flag indicating whether snaplen was specified. */
+int got_snaplen = 0;
 
 typedef u_int (*if_printer)(const struct pcap_pkthdr *, const u_char *);
 
@@ -535,6 +537,7 @@ main(int argc, char **argv)
 				error("invalid snaplen %s", optarg);
 			else if (snaplen == 0)
 				snaplen = 65535;
+			got_snaplen = 1;
 			break;
 		}
 
@@ -1021,22 +1024,33 @@ print_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 	hdrlen = (*print_info->printer)(h, sp);
 	if (xflag) {
 		/*
-		 * Print the raw packet data.
+		 * Print the raw packet data.  "The smaller of the
+		 *  entire packet or snaplen bytes will be printed", to
+		 *  quote the manpage, so truncate to snaplen if that's
+		 *  smaller than h->caplen.  This allows -s to limit
+		 *  the amount printed when using -x with -r.  But
+		 *  check got_snaplen, to avoid truncating packets to
+		 *  DEFAULT_SNAPLEN when -s is not given.
 		 */
+		int printlen;
+
+		printlen = (got_snaplen && (snaplen < h->caplen))
+			     ? snaplen : h->caplen;
+
 		if (xflag > 1) {
 			/*
 			 * Include the link-layer header.
 			 */
-			default_print(sp, h->caplen);
+			default_print(sp, printlen);
 		} else {
 			/*
 			 * Don't include the link-layer header - and if
 			 * we have nothing past the link-layer header,
 			 * print nothing.
 			 */
-			if (h->caplen > hdrlen)
+			if (printlen > hdrlen)
 				default_print(sp + hdrlen,
-				    h->caplen - hdrlen);
+				    printlen - hdrlen);
 		}
 	}
 

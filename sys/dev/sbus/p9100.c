@@ -42,6 +42,15 @@
  * Does not handle interrupts, even though they can occur.
  *
  * XXX should defer colormap updates to vertical retrace interrupts
+ *
+ * XXX It's undocumented as far as I can tell, but based on existing
+ *  code, it appears that, contrary to the implication of typing the
+ *  image and mask fields of fbcursor as char, the FBIOSCURSOR
+ *  interface expects the bitmap quantum to be 32 bits (or, to put it
+ *  another way, expects the row-to-row stride to always be a multiple
+ *  of 32 bits).  (This really should have been another field in
+ *  fbcursor, but it's way too late to fix that.)  The code backing
+ *  FBIOSCURSOR has this knowledge wired into it.
  */
 
 #include <sys/cdefs.h>
@@ -254,7 +263,7 @@ struct wsdisplay_accessops p9100_accessops = {
 };
 #endif
 
-#define PNOZZ_LATCH(sc, off) if(sc->sc_last_offset == (off & 0xffffff80)) { \
+#define PNOZZ_LATCH(sc, off) if(sc->sc_last_offset != (off & 0xffffff80)) { \
 		sc->sc_junk = bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, \
 		    off); \
 		sc->sc_last_offset = off & 0xffffff80; }
@@ -592,11 +601,13 @@ p9100ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 
 	case FBIOSCURSOR:
 	{
+		int enb;
 		int count;
 		uint32_t image[0x80], mask[0x80];
 		uint8_t red[3], green[3], blue[3];
 
 		v = p->set;
+		enb = p->enable;
 		if (v & FB_CUR_SETCMAP) {
 			error = copyin(p->cmap.red, red, 3);
 			error |= copyin(p->cmap.green, green, 3);
@@ -605,17 +616,20 @@ p9100ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 				return error;
 		}
 		if (v & FB_CUR_SETSHAPE) {
-			if (p->size.x > 64 || p->size.y > 64)
+			if ( (p->size.x < 0) || (p->size.x > 64) ||
+			     (p->size.y < 0) || (p->size.y > 64) )
 				return EINVAL;
 			memset(&mask, 0, 0x200);
 			memset(&image, 0, 0x200);
-			count = p->size.y * 8;
-			error = copyin(p->image, image, count);
-			if (error)
-				return error;
-			error = copyin(p->mask, mask, count);
-			if (error)
-				return error;
+			if ((p->size.x > 0) && (p->size.y > 0)) {
+				count = p->size.y * ((p->size.x <= 32) ? 4 : 8);
+				error = copyin(p->image, image, count);
+				if (error)
+					return error;
+				error = copyin(p->mask, mask, count);
+				if (error)
+					return error;
+			}
 		}
 
 		/* parameters are OK; do it */
@@ -637,6 +651,7 @@ p9100ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 		}
 
 		if (v & FB_CUR_SETSHAPE) {
+			pc->pc_size = p->size;
 			memcpy(pc->pc_bits, image, 0x200);
 			memcpy(&pc->pc_bits[0x80], mask, 0x200);
 			p9100_loadcursor(sc);
@@ -1484,12 +1499,22 @@ p9100_setcursorcmap(struct p9100_softc *sc)
 #endif
 }
 
+/*
+ * From a "best use of the hardware" perspective, we arguably should
+ *  set DSC_CURSOR_64 off if the cursor fits in 32x32 and on if not.
+ *  But that would involve more code redesign than I want to get into
+ *  now, so we just leave the hardware set to 64x64 and pad as
+ *  necessary here.  We have to be prepared to pad anyway to handle
+ *  some possibilities which don't fit in 32x32.
+ */
 static void
 p9100_loadcursor(struct p9100_softc *sc)
 {
 	uint32_t *image, *mask;
 	uint32_t bit, bbit, im, ma;
 	int i, j, k;
+	int x;
+	int y;
 	uint8_t latch1, latch2;
 
 #ifdef PNOZZ_PARANOID
@@ -1506,10 +1531,20 @@ p9100_loadcursor(struct p9100_softc *sc)
 	image = sc->sc_cursor.pc_bits;
 	mask = &sc->sc_cursor.pc_bits[0x80];
 
-	for (i = 0; i < 0x80; i++) {
+	i = 0;
+	for (y=0;y<64;y++) for (x=0;x<64;x+=32) {
 		bit = 0x80000000;
-		im = image[i];
-		ma = mask[i];
+		if ( (x < sc->sc_cursor.pc_size.x) &&
+		     (y < sc->sc_cursor.pc_size.y) ) {
+			unsigned int m;
+			m = (x+32 > sc->sc_cursor.pc_size.x) ? (~0U) << (x+32-sc->sc_cursor.pc_size.x) : ~0U;
+			im = image[i] & m;
+			ma = mask[i] & m;
+			i ++;
+		} else {
+			im = 0;
+			ma = 0;
+		}
 		for (k = 0; k < 4; k++) {
 			bbit = 0x1;
 			latch1 = 0;

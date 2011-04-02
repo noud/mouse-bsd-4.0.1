@@ -30,6 +30,8 @@
 #ifndef _ALPHA_FRAME_H_
 #define	_ALPHA_FRAME_H_
 
+#include <sys/siginfo.h>
+#include <sys/ucontext.h>
 #include <machine/alpha_cpu.h>
 
 /*

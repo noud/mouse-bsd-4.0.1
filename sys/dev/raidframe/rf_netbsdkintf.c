@@ -301,15 +301,22 @@ static void raidunlock(struct raid_softc *);
 
 static void rf_markalldirty(RF_Raid_t *);
 
+typedef enum rf_enough {
+	RF_ENOUGH_NO,
+	RF_ENOUGH_DEGRADED,
+	RF_ENOUGH_ALL
+} rf_enough_t;
+
 void rf_ReconThread(struct rf_recon_req *);
 void rf_RewriteParityThread(RF_Raid_t *raidPtr);
 void rf_CopybackThread(RF_Raid_t *raidPtr);
 void rf_ReconstructInPlaceThread(struct rf_recon_req *);
 int rf_autoconfig(struct device *self);
-void rf_buildroothack(RF_ConfigSet_t *);
+RF_ConfigSet_t *rf_buildroothack(RF_ConfigSet_t *, RF_AutoConfig_t **, int);
 
 RF_AutoConfig_t *rf_find_raid_components(void);
-RF_ConfigSet_t *rf_create_auto_sets(RF_AutoConfig_t *);
+RF_AutoConfig_t *rf_find_raid_components_on(device_t, RF_AutoConfig_t*);
+RF_ConfigSet_t *rf_create_auto_sets(RF_AutoConfig_t *, RF_ConfigSet_t*);
 static int rf_does_it_fit(RF_ConfigSet_t *,RF_AutoConfig_t *);
 static int rf_reasonable_label(RF_ComponentLabel_t *);
 void rf_create_configuration(RF_AutoConfig_t *,RF_Config_t *, RF_Raid_t *);
@@ -317,7 +324,8 @@ int rf_set_autoconfig(RF_Raid_t *, int);
 int rf_set_rootpartition(RF_Raid_t *, int);
 void rf_release_all_vps(RF_ConfigSet_t *);
 void rf_cleanup_config_set(RF_ConfigSet_t *);
-int rf_have_enough_components(RF_ConfigSet_t *);
+void rf_dispose_cset_list(RF_ConfigSet_t *);
+rf_enough_t rf_have_enough_components(RF_ConfigSet_t *);
 int rf_auto_config_set(RF_ConfigSet_t *, int *);
 
 static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
@@ -327,6 +335,10 @@ static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
 				  kernel config file.  */
 
 struct RF_Pools_s rf_pools;
+
+/* sdh = shutdownhook, but less typing */
+static int sdh_established = 0;
+static void *sdh_handle;
 
 void
 raidattach(int num)
@@ -408,6 +420,76 @@ raidattach(int num)
 		printf("WARNING: unable to register RAIDframe finalizer\n");
 }
 
+static void rf_lights_out(int unit)
+{
+ struct raid_softc *rs;
+ struct cfdata *cf;
+
+ printf("rf_lights_out unit %d\n",unit);
+ rs = &raid_softc[unit];
+ rf_Shutdown(raidPtrs[unit]);
+ rs->sc_flags &= ~RAIDF_INITED;
+ cf = device_cfdata(rs->sc_dev);
+ config_detach(rs->sc_dev,DETACH_QUIET);
+ free(cf,M_RAIDFRAME);
+ pseudo_disk_detach(&rs->sc_dkdev);
+}
+
+static void rf_shutdownhook(void *arg __attribute__((__unused__)))
+{
+ int i;
+ struct raid_softc *sc;
+ int e;
+ int any;
+ int loops;
+
+ printf("rf_shutdownhook\n");
+ /* Limit the number of times we loop, in case something's wedged.
+    One pass per RAID unit should be enough; add two out of paranoia.
+    Efficiency is a minor concern here - avoiding infinite loops during
+    shutdown is what this limit is really for. */
+ for (loops=numraid+2;loops>0;loops--)
+  { any = 0;
+    for (i=0;i<numraid;i++)
+     { sc = &raid_softc[i];
+       e = raidlock(sc);
+       if (e)
+	{ printf("raidlock failed %d for unit %d\n",e,i);
+	  continue;
+	}
+       if ( (sc->sc_flags & RAIDF_INITED) &&
+	    (sc->sc_dkdev.dk_openmask == 0) )
+	{ rf_update_component_labels(raidPtrs[i],RF_FINAL_COMPONENT_UPDATE);
+	  rf_lights_out(i);
+	  any = 1;
+	}
+       raidunlock(sc);
+     }
+    if (! any) break;
+  }
+}
+
+static void rf_setup_shutdownhook(void)
+{
+ if (sdh_established) return;
+ sdh_handle = shutdownhook_establish(&rf_shutdownhook,0);
+ sdh_established = 1;
+}
+
+static void dump_autoconfig_devs(RF_AutoConfig_t *l)
+{
+ for (;l;l=l->next) printf("%.*s%s",(int)sizeof(l->devname),&l->devname[0],l->next?" ":"");
+}
+
+static void dump_autoconfig_sets(RF_ConfigSet_t *l)
+{
+ for (;l;l=l->next)
+  { printf("[");
+    dump_autoconfig_devs(l->ac);
+    printf("]%s",l->next?" ":"");
+  }
+}
+
 int
 rf_autoconfig(struct device *self)
 {
@@ -421,20 +503,71 @@ rf_autoconfig(struct device *self)
 	/* XXX This code can only be run once. */
 	raidautoconfig = 0;
 
-	/* 1. locate all RAID components on the system */
+	/* For teardown of RAID units not open at shutdown */
+	rf_setup_shutdownhook();
+
+	/* 1. locate all RAID components on regular disks */
 #ifdef DEBUG
 	printf("Searching for RAID components...\n");
 #endif
 	ac_list = rf_find_raid_components();
 
-	/* 2. Sort them into their respective sets. */
-	config_sets = rf_create_auto_sets(ac_list);
+	config_sets = 0;
+	do {
+		do {
+printf("RF autoconfig: raw component list: ");
+dump_autoconfig_devs(ac_list);
+printf(".\n");
+			/* 2. Sort them into their respective sets. */
+			config_sets = rf_create_auto_sets(ac_list, config_sets);
 
+printf("RF autoconfig: sets: ");
+dump_autoconfig_sets(config_sets);
+printf(".\n");
+			/*
+			 * 3. Evaluate each set and configure the valid ones.
+			 * This gets done in rf_buildroothack().
+			 */
+			ac_list = NULL;
+			config_sets =
+			    rf_buildroothack(config_sets, &ac_list, 0);
+
+			/* 
+			 * 4. If there were RAID components inside a RAID that
+			 * we just autoconfigured ("RAID on RAID"), loop and
+			 * see if those want to be autoconfigured.
+			 */
+		} while (ac_list);
+
+printf("RF autoconfig: parts-missing list: ");
+dump_autoconfig_sets(config_sets);
+printf(".\n");
+		/*
+		 * 5. If a RAID was missing components, but not enough to
+		 * prevent configuration, then it was not handled above, in
+		 * case the missing components turned up inside another RAID.
+		 * (This is an odd use case, but there's no reason not to
+		 * support it.)  Configure such RAIDs, if any, now.
+		 */
+		config_sets = rf_buildroothack(config_sets, &ac_list, 1);
+
+		/* 
+		 * 6. However, the configurations performed in the
+		 * previous step may have revealed new RAID components
+		 * (for example, if one leaf of a striped mirror or
+		 * striped parity configuration is missing); loop and
+		 * see if this makes any more sets autoconfigurable.
+		 */
+	} while (ac_list);
+
+printf("RF autoconfig: dropping unconfigurable list: ");
+dump_autoconfig_sets(config_sets);
+printf(".\n");
 	/*
-	 * 3. Evaluate each set andconfigure the valid ones.
-	 * This gets done in rf_buildroothack().
+	 * 7. There may remain autoconfigured sets that cannot be
+	 * brought up at all; dispose of them.
 	 */
-	rf_buildroothack(config_sets);
+	rf_dispose_cset_list(config_sets);
 
 	for (i = 0; i < numraid; i++)
 		if (raidPtrs[i] != NULL && raidPtrs[i]->valid)
@@ -443,48 +576,97 @@ rf_autoconfig(struct device *self)
 	return 1;
 }
 
-void
-rf_buildroothack(RF_ConfigSet_t *config_sets)
+/* kludge, for our purposes alone.  (in general, this routine should
+   not be restricted to disks, for example.) */
+static device_t device_find_by_driver_unit(const char *name, int unit)
+{
+ struct device *d;
+
+ for (d=alldevs.tqh_first;d;d=d->dv_list.tqe_next)
+  { if (device_class(d) != DV_DISK) continue;
+    if (! device_is_a(d,name)) continue;
+    if (d->dv_unit != unit) continue;
+    return(d);
+  }
+ return(0);
+}
+
+RF_ConfigSet_t *
+rf_buildroothack(RF_ConfigSet_t *config_sets, RF_AutoConfig_t **newdevs, int degraded)
 {
 	RF_ConfigSet_t *cset;
 	RF_ConfigSet_t *next_cset;
+	RF_ConfigSet_t *leftovers;
 	int retcode;
 	int raidID;
 	int rootID;
 	int num_root;
+	rf_enough_t enough;
 
 	rootID = 0;
 	num_root = 0;
 	cset = config_sets;
+	leftovers = 0;
 	while(cset != NULL ) {
 		next_cset = cset->next;
-		if (rf_have_enough_components(cset) &&
-		    cset->ac->clabel->autoconfigure==1) {
-			retcode = rf_auto_config_set(cset,&raidID);
-			if (!retcode) {
-#ifdef DEBUG
-				printf("raid%d: configured ok\n", raidID);
-#endif
-				if (cset->rootable) {
-					rootID = raidID;
-					num_root++;
-				}
-			} else {
-				/* The autoconfig didn't work :( */
-#ifdef DEBUG
-				printf("Autoconfig failed with code %d for raid%d\n", retcode, raidID);
-#endif
-				rf_release_all_vps(cset);
-			}
-		} else {
-#ifdef DEBUG
-			printf("raid%d: not enough components\n", raidID);
-#endif
+cset->next = 0;
+printf("rf_buildroothack: cset: ");
+dump_autoconfig_sets(cset);
+printf(".\n");
+cset->next = next_cset;
+		if (cset->ac->clabel->autoconfigure != 1) {
+printf("rf_buildroothack: not autoconfiguring\n");
 			/* we're not autoconfiguring this set...
 			   release the associated resources */
 			rf_release_all_vps(cset);
+			goto cleanup;
+		}
+
+		enough = rf_have_enough_components(cset);
+switch (enough) {
+case RF_ENOUGH_NO: printf("rf_buildroothack: enough = NO\n"); break;
+case RF_ENOUGH_DEGRADED: printf("rf_buildroothack: enough = DEGRADED (degraded=%d)\n",degraded); break;
+case RF_ENOUGH_ALL: printf("rf_buildroothack: enough = ALL\n"); break;
+default: printf("rf_buildroothack: enough = ?%d\n",(int)enough); break;
+}
+		if (enough == RF_ENOUGH_NO ||
+		    (!degraded && enough == RF_ENOUGH_DEGRADED)) {
+printf("rf_buildroothack: not enough components\n");
+			/* Not enough components yet.  Save for later... */
+#ifdef DEBUG
+			printf("raid%d: not enough components yet\n", raidID);
+#endif
+			cset->next = leftovers;
+			leftovers = cset;
+			cset = next_cset;
+			continue;
+		}
+
+		/* Enough components, for some value of "enough"; configure. */
+		retcode = rf_auto_config_set(cset,&raidID);
+		if (!retcode) {
+printf("rf_buildroothack: config worked (raid%d)\n",raidID);
+#ifdef DEBUG
+			printf("raid%d: configured ok\n", raidID);
+#endif
+			if (cset->rootable) {
+				rootID = raidID;
+				num_root++;
+			}
+			/* Look for components of a nested RAID. */
+			*newdevs = rf_find_raid_components_on(
+				device_find_by_driver_unit("raid",
+				    raidID), *newdevs);
+		} else {
+printf("rf_buildroothack: config failed (%d)\n",retcode);
+			/* The autoconfig didn't work :( */
+#ifdef DEBUG
+			printf("Autoconfig failed with code %d for raid%d\n", retcode, raidID);
+#endif
+			rf_release_all_vps(cset);
 		}
 		/* cleanup */
+cleanup:
 		rf_cleanup_config_set(cset);
 		cset = next_cset;
 	}
@@ -493,18 +675,22 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	   then we don't touch booted_device or boothowto... */
 
 	if (rootspec != NULL)
-		return;
+		return leftovers;
 
 	/* we found something bootable... */
 
 	if (num_root == 1) {
 		booted_device = raid_softc[rootID].sc_dev;
 	} else if (num_root > 1) {
+		/*
+		 * (Note: if multiple bootable raids are discovered
+		 * on different passes, the results may be unexpected.)
+		 */
 		/* we can't guess.. require the user to answer... */
 		boothowto |= RB_ASKNAME;
 	}
+	return leftovers;
 }
-
 
 int
 raidsize(dev_t dev)
@@ -633,7 +819,6 @@ int
 raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int     unit = raidunit(dev);
-	struct cfdata *cf;
 	struct raid_softc *rs;
 	int     error = 0;
 	int     part;
@@ -669,23 +854,8 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 		rf_update_component_labels(raidPtrs[unit],
 						 RF_FINAL_COMPONENT_UPDATE);
-		if (doing_shutdown) {
-			/* last one, and we're going down, so
-			   lights out for this RAID set too. */
-			error = rf_Shutdown(raidPtrs[unit]);
-
-			/* It's no longer initialized... */
-			rs->sc_flags &= ~RAIDF_INITED;
-
-			/* detach the device */
-			
-			cf = device_cfdata(rs->sc_dev);
-			error = config_detach(rs->sc_dev, DETACH_QUIET);
-			free(cf, M_RAIDFRAME);
-			
-			/* Detach the disk. */
-			pseudo_disk_detach(&rs->sc_dkdev);
-		}
+		if (doing_shutdown)
+			rf_lights_out(unit);
 	}
 
 	raidunlock(rs);
@@ -1404,7 +1574,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			*(int *) data = 100;
 		else {
 			if (raidPtr->reconControl->numRUsTotal > 0) {
-				*(int *) data = (raidPtr->reconControl->numRUsComplete * 100 / raidPtr->reconControl->numRUsTotal);
+				*(int *) data = (raidPtr->reconControl->numRUsComplete * 100ULL / raidPtr->reconControl->numRUsTotal);
 			} else {
 				*(int *) data = 0;
 			}
@@ -1436,7 +1606,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			return(0);
 		}
 		if (raidPtr->parity_rewrite_in_progress == 1) {
-			*(int *) data = 100 *
+			*(int *) data = 100ULL *
 				raidPtr->parity_rewrite_stripes_done /
 				raidPtr->Layout.numStripe;
 		} else {
@@ -1468,7 +1638,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			return(0);
 		}
 		if (raidPtr->copyback_in_progress == 1) {
-			*(int *) data = 100 * raidPtr->copyback_stripes_done /
+			*(int *) data = 100ULL * raidPtr->copyback_stripes_done /
 				raidPtr->Layout.numStripe;
 		} else {
 			*(int *) data = 100;
@@ -2134,7 +2304,7 @@ raidgetdisklabel(dev_t dev)
 		 * same components are used, and old disklabel may used
 		 * if that is found.
 		 */
-		if (lp->d_secperunit != rs->sc_size)
+		if ((long)lp->d_secperunit != (long)rs->sc_size)
 			printf("raid%d: WARNING: %s: "
 			    "total sector size in disklabel (%d) != "
 			    "the size of raid (%ld)\n", unit, rs->sc_xname,
@@ -2678,15 +2848,8 @@ oomem:
 RF_AutoConfig_t *
 rf_find_raid_components()
 {
-	struct vnode *vp;
-	struct disklabel label;
-	struct device *dv;
-	dev_t dev;
-	int bmajor, bminor, wedge;
-	int error;
-	int i;
+	device_t dv;
 	RF_AutoConfig_t *ac_list;
-
 
 	/* initialize the AutoConfig list */
 	ac_list = NULL;
@@ -2720,96 +2883,112 @@ rf_find_raid_components()
 			continue;
 		}
 
-		/* need to find the device_name_to_block_device_major stuff */
-		bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
-
-		/* get a vnode for the raw partition of this disk */
-
-		wedge = device_is_a(dv, "dk");
-		bminor = minor(device_unit(dv));
-		dev = wedge ? makedev(bmajor, bminor) :
-		    MAKEDISKDEV(bmajor, bminor, RAW_PART);
-		if (bdevvp(dev, &vp))
-			panic("RAID can't alloc vnode");
-
-		error = VOP_OPEN(vp, FREAD, NOCRED, 0);
-
-		if (error) {
-			/* "Who cares."  Continue looking
-			   for something that exists*/
-			vput(vp);
-			continue;
-		}
-
-		if (wedge) {
-			struct dkwedge_info dkw;
-			error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD,
-			    NOCRED, 0);
-			if (error) {
-				printf("RAIDframe: can't get wedge info for "
-				    "dev %s (%d)\n", dv->dv_xname, error);
-out:
-				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
-				vput(vp);
-				continue;
-			}
-
-			if (strcmp(dkw.dkw_ptype, DKW_PTYPE_RAIDFRAME) != 0)
-				goto out;
-				
-			ac_list = rf_get_component(ac_list, dev, vp,
-			    dv->dv_xname, dkw.dkw_size);
-			continue;
-		}
-
-		/* Ok, the disk exists.  Go get the disklabel. */
-		error = VOP_IOCTL(vp, DIOCGDINFO, &label, FREAD, NOCRED, 0);
-		if (error) {
-			/*
-			 * XXX can't happen - open() would
-			 * have errored out (or faked up one)
-			 */
-			if (error != ENOTTY)
-				printf("RAIDframe: can't get label for dev "
-				    "%s (%d)\n", dv->dv_xname, error);
-		}
-
-		/* don't need this any more.  We'll allocate it again
-		   a little later if we really do... */
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
-		vput(vp);
-
-		if (error)
-			continue;
-
-		for (i = 0; i < label.d_npartitions; i++) {
-			char cname[sizeof(ac_list->devname)];
-
-			/* We only support partitions marked as RAID */
-			if (label.d_partitions[i].p_fstype != FS_RAID)
-				continue;
-
-			dev = MAKEDISKDEV(bmajor, device_unit(dv), i);
-			if (bdevvp(dev, &vp))
-				panic("RAID can't alloc vnode");
-
-			error = VOP_OPEN(vp, FREAD, NOCRED, 0);
-			if (error) {
-				/* Whatever... */
-				vput(vp);
-				continue;
-			}
-			snprintf(cname, sizeof(cname), "%s%c",
-			    dv->dv_xname, 'a' + i);
-			ac_list = rf_get_component(ac_list, dev, vp, cname,
-				label.d_partitions[i].p_size);
-		}
+		ac_list = rf_find_raid_components_on(dv, ac_list);
 	}
 	return ac_list;
 }
 
+RF_AutoConfig_t *
+rf_find_raid_components_on(device_t dv, RF_AutoConfig_t *ac_list)
+{
+	struct vnode *vp;
+	struct disklabel label;
+	dev_t dev;
+	int bmajor, bminor, wedge;
+	int error;
+	int i;
+
+	/* need to find the device_name_to_block_device_major stuff */
+	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
+
+	/* get a vnode for the raw partition of this disk */
+	wedge = device_is_a(dv, "dk");
+	bminor = minor(device_unit(dv));
+
+	dev = wedge ? makedev(bmajor, bminor) :
+	    MAKEDISKDEV(bmajor, bminor, RAW_PART);
+
+	if (bdevvp(dev, &vp))
+		panic("RAID can't alloc vnode");
+
+	error = VOP_OPEN(vp, FREAD, NOCRED, 0);
+
+	if (error) {
+		/* "Who cares."  Continue looking
+		   for something that exists */
+		vput(vp);
+		return ac_list;
+	}
+
+	if (wedge) {
+		struct dkwedge_info dkw;
+		error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED, 0);
+		if (error) {
+			printf("RAIDframe: can't get wedge info for "
+			    "dev %s (%d)\n", dv->dv_xname, error);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+			vput(vp);
+			return ac_list;
+		}
+
+		if (strcmp(dkw.dkw_ptype, DKW_PTYPE_RAIDFRAME) != 0) {
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+			vput(vp);
+			return ac_list;
+		}
+
+		ac_list = rf_get_component(ac_list, dev, vp,
+		    dv->dv_xname, dkw.dkw_size);
+		return ac_list;
+	}
+
+	/* Ok, the disk exists.  Go get the disklabel. */
+	error = VOP_IOCTL(vp, DIOCGDINFO, &label, FREAD, NOCRED, 0);
+	if (error) {
+		/*
+		 * XXX can't happen - open() would
+		 * have errored out (or faked up one)
+		 */
+		if (error != ENOTTY)
+			printf("RAIDframe: can't get label for dev "
+			    "%s (%d)\n", dv->dv_xname, error);
+	}
+
+	/* don't need this any more.  We'll allocate it again
+	   a little later if we really do... */
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+	vput(vp);
+
+	if (error)
+		return ac_list;
+
+	for (i = 0; i < label.d_npartitions; i++) {
+		char cname[sizeof(ac_list->devname)];
+
+		/* We only support partitions marked as RAID */
+		if (label.d_partitions[i].p_fstype != FS_RAID)
+			continue;
+
+		dev = MAKEDISKDEV(bmajor, device_unit(dv), i);
+		if (bdevvp(dev, &vp))
+			panic("RAID can't alloc vnode");
+
+		error = VOP_OPEN(vp, FREAD, NOCRED, 0);
+		if (error) {
+			/* Whatever... */
+			vput(vp);
+			continue;
+		}
+		snprintf(cname, sizeof(cname), "%s%c",
+		    dv->dv_xname, 'a' + i);
+		ac_list = rf_get_component(ac_list, dev, vp, cname,
+			label.d_partitions[i].p_size);
+	}
+	return ac_list;
+}
 
 static int
 rf_reasonable_label(RF_ComponentLabel_t *clabel)
@@ -2863,15 +3042,11 @@ rf_print_component_label(RF_ComponentLabel_t *clabel)
 #endif
 
 RF_ConfigSet_t *
-rf_create_auto_sets(RF_AutoConfig_t *ac_list)
+rf_create_auto_sets(RF_AutoConfig_t *ac_list, RF_ConfigSet_t *config_sets)
 {
 	RF_AutoConfig_t *ac;
-	RF_ConfigSet_t *config_sets;
 	RF_ConfigSet_t *cset;
 	RF_AutoConfig_t *ac_next;
-
-
-	config_sets = NULL;
 
 	/* Go through the AutoConfig list, and figure out which components
 	   belong to what sets.  */
@@ -2985,7 +3160,7 @@ rf_does_it_fit(RF_ConfigSet_t *cset, RF_AutoConfig_t *ac)
 	return(1);
 }
 
-int
+rf_enough_t
 rf_have_enough_components(RF_ConfigSet_t *cset)
 {
 	RF_AutoConfig_t *ac;
@@ -3058,16 +3233,15 @@ rf_have_enough_components(RF_ConfigSet_t *cset)
 					    component, it's
 					    "Good Night, Charlie" */
 					if (even_pair_failed == 1) {
-						return(0);
+						return(RF_ENOUGH_NO);
 					}
 				}
-			} else {
-				/* normal accounting */
-				num_missing++;
 			}
+			/* normal accounting */
+			num_missing++;
 		}
 		if ((parity_type == '1') && (c%2 == 1)) {
-				/* Just did an even component, and we didn't
+				/* Just did an odd component, and we didn't
 				   bail.. reset the even_pair_failed flag,
 				   and go on to the next component.... */
 			even_pair_failed = 0;
@@ -3081,11 +3255,11 @@ rf_have_enough_components(RF_ConfigSet_t *cset)
 	    ((clabel->parityConfig == '5') && (num_missing > 1))) {
 		/* XXX this needs to be made *much* more general */
 		/* Too many failures */
-		return(0);
+		return(RF_ENOUGH_NO);
 	}
 	/* otherwise, all is well, and we've got enough to take a kick
 	   at autoconfiguring this set */
-	return(1);
+	return((num_missing > 0) ? RF_ENOUGH_DEGRADED : RF_ENOUGH_ALL);
 }
 
 void
@@ -3227,6 +3401,16 @@ rf_cleanup_config_set(RF_ConfigSet_t *cset)
 	free(cset, M_RAIDFRAME);
 }
 
+void rf_dispose_cset_list(RF_ConfigSet_t *cset)
+{
+	while (cset) {
+		RF_ConfigSet_t *next_cset = cset->next;
+
+		rf_release_all_vps(cset);
+		rf_cleanup_config_set(cset);
+		cset = next_cset;
+	}
+}
 
 void
 raid_init_component_label(RF_Raid_t *raidPtr, RF_ComponentLabel_t *clabel)
@@ -3292,11 +3476,13 @@ rf_auto_config_set(RF_ConfigSet_t *cset, int *unit)
 
 	raidID = cset->ac->clabel->last_unit;
 	if ((raidID < 0) || (raidID >= numraid)) {
+printf("rf_auto_config_set: raidID = %d, using %d\n",raidID,numraid-1);
 		/* let's not wander off into lala land. */
 		raidID = numraid - 1;
 	}
 	if (raidPtrs[raidID]->valid != 0) {
 
+printf("rf_auto_config_set: raidID = %d already taken\n",raidID);
 		/*
 		   Nope... Go looking for an alternative...
 		   Start high so we don't immediately use raid0 if that's
@@ -3305,6 +3491,7 @@ rf_auto_config_set(RF_ConfigSet_t *cset, int *unit)
 
 		for(raidID = numraid - 1; raidID >= 0; raidID--) {
 			if (raidPtrs[raidID]->valid == 0) {
+printf("rf_auto_config_set: using %d\n",raidID);
 				/* can use this one! */
 				break;
 			}
@@ -3319,6 +3506,7 @@ rf_auto_config_set(RF_ConfigSet_t *cset, int *unit)
 		return(1);
 	}
 
+printf("rf_auto_config_set: configuring as raid%d\n",raidID);
 #ifdef DEBUG
 	printf("Configuring raid%d:\n",raidID);
 #endif
@@ -3447,5 +3635,3 @@ raid_detach(struct device *self, int flags)
 
 	return 0;
 }
-
-

@@ -135,7 +135,7 @@ nsprotopr(off, name)
 			}
 			printf("%-5.5s %-6.6s %-6.6s  %-*.*s %-*.*s %s\n",
 			       "Proto", "Recv-Q", "Send-Q",
-			       width, width, "Local Address", 
+			       width, width, "Local Address",
 			       width, width, "Foreign Address", "(state)");
 			first = 0;
 		}

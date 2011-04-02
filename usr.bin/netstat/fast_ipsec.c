@@ -150,7 +150,7 @@ algname(int a, const struct alg algs[], int nalgs)
 
 /*
  * Print the fast_ipsec statistics.
- * Since NetBSD's netstat(1) seems not to find us for "netstat -s", 
+ * Since NetBSD's netstat(1) seems not to find us for "netstat -s",
  * but does(?) find KAME, be prepared to be called explicitly from
  * netstat's main program for "netstat -s"; but silently do nothing
  * if that happens when we are running on KAME IPsec.
@@ -219,7 +219,7 @@ fast_ipsec_stats(u_long off, char *name)
 	STAT(ipsecstats.ips_spdcache_lookup, "SPD cache misses");
 #undef STAT
 	printf("\n");
-	
+
 	printf("IPsec ah:\n");
 #define	AHSTAT(x,fmt)	if ((x) || sflag <= 1) printf("\t%"PRIu64" ah " fmt "\n", x)
 	AHSTAT(ahstats.ahs_input,   "input packets processed");

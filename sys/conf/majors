@@ -28,5 +28,9 @@ device-major	bthub		char 175		bthub
 device-major	amr		char 176		amr
 device-major	lockstat	char 177		lockstat
 device-major	puffs		char 178		puffs
+device-major	diskwatch	char 179		diskwatch
+device-major	srt		char 180		srt
 device-major	bio		char 181		bio
 device-major	twa		char 187		twa
+
+device-major	pfw		char 144		pfw

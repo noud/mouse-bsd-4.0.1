@@ -4,7 +4,7 @@
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -156,13 +156,13 @@ static int compact;
 static void
 ip6protoprhdr(void)
 {
-	
+
 	printf("Active Internet6 connections");
-	
+
 	if (aflag)
 		printf(" (including servers)");
 	putchar('\n');
-	
+
 	if (Aflag) {
 		printf("%-8.8s ", "PCB");
 		width = 18;
@@ -211,7 +211,7 @@ ip6protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 #endif
 	}
 	putchar('\n');
-	
+
 }
 
 
@@ -258,7 +258,7 @@ ip6protopr(off, name)
 		if (sysctl(mib, sizeof(mib) / sizeof(*mib), NULL, &size,
 		    NULL, 0) == -1)
 			err(1, "sysctl (query)");
-		
+
 		if ((pcblist = malloc(size)) == NULL)
 			err(1, "malloc");
 		memset(pcblist, 0, size);
@@ -314,7 +314,7 @@ ip6protopr(off, name)
 
 		if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_laddr))
 			continue;
-		kread((u_long)in6pcb.in6p_socket, (char *)&sockb, 
+		kread((u_long)in6pcb.in6p_socket, (char *)&sockb,
 		    sizeof (sockb));
 		if (istcp) {
 #ifdef TCP6
@@ -329,12 +329,12 @@ ip6protopr(off, name)
 			ip6protoprhdr();
 			first = 0;
 		}
-		ip6protopr0(istcp ? (intptr_t) in6pcb.in6p_ppcb : 
+		ip6protopr0(istcp ? (intptr_t) in6pcb.in6p_ppcb :
 		    (intptr_t) prev, sockb.so_rcv.sb_cc, sockb.so_snd.sb_cc,
 		    &in6pcb.in6p_laddr, in6pcb.in6p_lport,
 		    &in6pcb.in6p_faddr, in6pcb.in6p_fport,
 		    tcpcb.t_state, name);
-		
+
 	}
 }
 
@@ -650,7 +650,7 @@ ip6_stats(off, name)
 	p(ip6s_m1, "\t\t%llu one mbuf%s\n");
 	for (first = 1, i = 0; i < 32; i++) {
 		char ifbuf[IFNAMSIZ];
-		if (ip6stat.ip6s_m2m[i] != 0) {		
+		if (ip6stat.ip6s_m2m[i] != 0) {
 			if (first) {
 				printf("\t\ttwo or more mbuf:\n");
 				first = 0;
@@ -821,7 +821,7 @@ static	char *icmp6names[] = {
 	"#16",
 	"#17",
 	"#18",
-	"#19",	
+	"#19",
 	"#20",
 	"#21",
 	"#22",
@@ -831,7 +831,7 @@ static	char *icmp6names[] = {
 	"#26",
 	"#27",
 	"#28",
-	"#29",	
+	"#29",
 	"#30",
 	"#31",
 	"#32",
@@ -841,7 +841,7 @@ static	char *icmp6names[] = {
 	"#36",
 	"#37",
 	"#38",
-	"#39",	
+	"#39",
 	"#40",
 	"#41",
 	"#42",
@@ -851,7 +851,7 @@ static	char *icmp6names[] = {
 	"#46",
 	"#47",
 	"#48",
-	"#49",	
+	"#49",
 	"#50",
 	"#51",
 	"#52",
@@ -861,7 +861,7 @@ static	char *icmp6names[] = {
 	"#56",
 	"#57",
 	"#58",
-	"#59",	
+	"#59",
 	"#60",
 	"#61",
 	"#62",
@@ -871,7 +871,7 @@ static	char *icmp6names[] = {
 	"#66",
 	"#67",
 	"#68",
-	"#69",	
+	"#69",
 	"#70",
 	"#71",
 	"#72",
@@ -881,7 +881,7 @@ static	char *icmp6names[] = {
 	"#76",
 	"#77",
 	"#78",
-	"#79",	
+	"#79",
 	"#80",
 	"#81",
 	"#82",
@@ -891,7 +891,7 @@ static	char *icmp6names[] = {
 	"#86",
 	"#87",
 	"#88",
-	"#89",	
+	"#89",
 	"#80",
 	"#91",
 	"#92",
@@ -901,7 +901,7 @@ static	char *icmp6names[] = {
 	"#96",
 	"#97",
 	"#98",
-	"#99",	
+	"#99",
 	"#100",
 	"#101",
 	"#102",
@@ -911,7 +911,7 @@ static	char *icmp6names[] = {
 	"#106",
 	"#107",
 	"#108",
-	"#109",	
+	"#109",
 	"#110",
 	"#111",
 	"#112",
@@ -921,7 +921,7 @@ static	char *icmp6names[] = {
 	"#116",
 	"#117",
 	"#118",
-	"#119",	
+	"#119",
 	"#120",
 	"#121",
 	"#122",
@@ -931,7 +931,7 @@ static	char *icmp6names[] = {
 	"#126",
 	"#127",
 	"echo",
-	"echo reply",	
+	"echo reply",
 	"multicast listener query",
 	"multicast listener report",
 	"multicast listener done",
@@ -951,7 +951,7 @@ static	char *icmp6names[] = {
 	"#146",
 	"#147",
 	"#148",
-	"#149",	
+	"#149",
 	"#150",
 	"#151",
 	"#152",
@@ -961,7 +961,7 @@ static	char *icmp6names[] = {
 	"#156",
 	"#157",
 	"#158",
-	"#159",	
+	"#159",
 	"#160",
 	"#161",
 	"#162",
@@ -971,7 +971,7 @@ static	char *icmp6names[] = {
 	"#166",
 	"#167",
 	"#168",
-	"#169",	
+	"#169",
 	"#170",
 	"#171",
 	"#172",
@@ -981,7 +981,7 @@ static	char *icmp6names[] = {
 	"#176",
 	"#177",
 	"#178",
-	"#179",	
+	"#179",
 	"#180",
 	"#181",
 	"#182",
@@ -991,7 +991,7 @@ static	char *icmp6names[] = {
 	"#186",
 	"#187",
 	"#188",
-	"#189",	
+	"#189",
 	"#180",
 	"#191",
 	"#192",
@@ -1001,7 +1001,7 @@ static	char *icmp6names[] = {
 	"#196",
 	"#197",
 	"#198",
-	"#199",	
+	"#199",
 	"#200",
 	"#201",
 	"#202",
@@ -1011,7 +1011,7 @@ static	char *icmp6names[] = {
 	"#206",
 	"#207",
 	"#208",
-	"#209",	
+	"#209",
 	"#210",
 	"#211",
 	"#212",
@@ -1021,7 +1021,7 @@ static	char *icmp6names[] = {
 	"#216",
 	"#217",
 	"#218",
-	"#219",	
+	"#219",
 	"#220",
 	"#221",
 	"#222",
@@ -1031,7 +1031,7 @@ static	char *icmp6names[] = {
 	"#226",
 	"#227",
 	"#228",
-	"#229",	
+	"#229",
 	"#230",
 	"#231",
 	"#232",
@@ -1041,7 +1041,7 @@ static	char *icmp6names[] = {
 	"#236",
 	"#237",
 	"#238",
-	"#239",	
+	"#239",
 	"#240",
 	"#241",
 	"#242",
@@ -1051,7 +1051,7 @@ static	char *icmp6names[] = {
 	"#246",
 	"#247",
 	"#248",
-	"#249",	
+	"#249",
 	"#250",
 	"#251",
 	"#252",
@@ -1082,7 +1082,7 @@ icmp6_stats(off, name)
 			return;
 		kread(off, (char *)&icmp6stat, sizeof (icmp6stat));
 	}
-	
+
 	printf("%s:\n", name);
 
 #define	p(f, m) if (icmp6stat.f || sflag <= 1) \
@@ -1172,7 +1172,7 @@ icmp6_ifstats(ifname)
 	}
 
 	p(ifs6_in_msg, "\t%llu total input message%s\n");
-	p(ifs6_in_error, "\t%llu total input error message%s\n"); 
+	p(ifs6_in_error, "\t%llu total input error message%s\n");
 	p(ifs6_in_dstunreach, "\t%llu input destination unreachable error%s\n");
 	p(ifs6_in_adminprohib, "\t%llu input administratively prohibited error%s\n");
 	p(ifs6_in_timeexceed, "\t%llu input time exceeded error%s\n");

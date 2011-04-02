@@ -89,6 +89,7 @@
 #endif
 
 #include <uvm/uvm_param.h>	/* for MIN_PAGE_SIZE */
+#include <machine/param.h>	/* for MSIZE */
 
 /*
  * Mbufs are of a single size, MSIZE (machine/param.h), which

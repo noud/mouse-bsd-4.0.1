@@ -409,7 +409,8 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	}
 	KASSERT(access_size > 0);
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
-	    access_linear_min, NULL, 0, VM_PROT_READ | VM_PROT_WRITE);
+	    access_linear_min, NULL, 0,
+	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
 
 	return 0;
 }

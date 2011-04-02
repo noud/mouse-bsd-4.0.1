@@ -65,6 +65,8 @@
 #include <stdio.h>
 #include <arpa/nameser.h>
 
+#include <netinet/in.h>
+
 /*%
  * Revision information.  This is the release date in YYYYMMDD format.
  * It can change every day so the right thing to do with it is use it

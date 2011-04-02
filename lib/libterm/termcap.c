@@ -384,6 +384,7 @@ t_getstr(struct tinfo *info, const char *id, char **area, size_t *limit)
 		return NULL;
 	}
 
+	i ++; /* account for the NUL */
 	if (area != NULL) {
 		/*
 		 * check if there is room for the new entry to be put into
@@ -398,7 +399,7 @@ t_getstr(struct tinfo *info, const char *id, char **area, size_t *limit)
 		(void)strcpy(*area, s);
 		free(s);
 		s = *area;
-		*area += i + 1;
+		*area += i;
 		if (limit != NULL) *limit -= i;
 
 		return (s);

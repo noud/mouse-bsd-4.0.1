@@ -196,8 +196,9 @@ struct	linger {
 					   in interface output routine */
 #endif
 #define AF_BLUETOOTH	31
+#define AF_TIMER	32
 
-#define	AF_MAX		32
+#define	AF_MAX		33
 
 /*
  * Structure used by kernel to store most
@@ -284,6 +285,7 @@ struct sockaddr_storage {
 #define PF_KEY 		pseudo_AF_KEY	/* like PF_ROUTE, only for key mgmt */
 #endif
 #define PF_BLUETOOTH	AF_BLUETOOTH
+#define PF_TIMER	AF_TIMER
 
 #define	PF_MAX		AF_MAX
 

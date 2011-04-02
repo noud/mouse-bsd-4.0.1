@@ -296,6 +296,7 @@ set_timebase(void)
 	panic("no cpu node");
 
 found:
+	printf("CPU timebase frequency: %lu Hz\n",(unsigned long int)ticks_per_sec);    
 	/*
 	 * Should check for correct CPU here?		XXX
 	 */
@@ -734,12 +735,13 @@ cninit_kd()
 	 */
 
 	/*
-	 * stdin is /pseudo-hid/keyboard.  There is no 
-	 * `adb-kbd-ihandle or `usb-kbd-ihandles methods
-	 * available. Try attaching as ADB.
+	 * stdin is /pseudo-hid/keyboard.  There will be no 
+	 * `adb-kbd-ihandle or `usb-kbd-ihandles method available.
+	 * Try attaching as ADB, if we have ADB keyboards configured.
 	 *
 	 * XXX This must be called before pmap_bootstrap().
 	 */
+#if (NAKBD > 0) || (NADBKBD > 0)
 	if (strcmp(name, "pseudo-hid") == 0) {
 		printf("console keyboard type: unknown, assuming ADB\n");
 #if NAKBD > 0
@@ -750,6 +752,7 @@ cninit_kd()
 #endif
 		goto kbd_found;
 	}
+#endif
 
 	/*
 	 * stdin is /psuedo-hid/keyboard.  Test `adb-kbd-ihandle and
