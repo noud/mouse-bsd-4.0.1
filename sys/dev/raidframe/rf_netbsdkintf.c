@@ -1404,7 +1404,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			*(int *) data = 100;
 		else {
 			if (raidPtr->reconControl->numRUsTotal > 0) {
-				*(int *) data = (raidPtr->reconControl->numRUsComplete * 100 / raidPtr->reconControl->numRUsTotal);
+				*(int *) data = (raidPtr->reconControl->numRUsComplete * 100ULL / raidPtr->reconControl->numRUsTotal);
 			} else {
 				*(int *) data = 0;
 			}
@@ -1436,7 +1436,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			return(0);
 		}
 		if (raidPtr->parity_rewrite_in_progress == 1) {
-			*(int *) data = 100 *
+			*(int *) data = 100ULL *
 				raidPtr->parity_rewrite_stripes_done /
 				raidPtr->Layout.numStripe;
 		} else {
@@ -1468,7 +1468,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			return(0);
 		}
 		if (raidPtr->copyback_in_progress == 1) {
-			*(int *) data = 100 * raidPtr->copyback_stripes_done /
+			*(int *) data = 100ULL * raidPtr->copyback_stripes_done /
 				raidPtr->Layout.numStripe;
 		} else {
 			*(int *) data = 100;
@@ -2134,7 +2134,7 @@ raidgetdisklabel(dev_t dev)
 		 * same components are used, and old disklabel may used
 		 * if that is found.
 		 */
-		if (lp->d_secperunit != rs->sc_size)
+		if ((long)lp->d_secperunit != (long)rs->sc_size)
 			printf("raid%d: WARNING: %s: "
 			    "total sector size in disklabel (%d) != "
 			    "the size of raid (%ld)\n", unit, rs->sc_xname,
