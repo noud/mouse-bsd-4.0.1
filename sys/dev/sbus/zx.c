@@ -476,7 +476,7 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 	default:
 #ifdef DEBUG
 		log(LOG_NOTICE, "zxioctl(0x%lx) (%s[%d])\n", cmd,
-		    p->p_comm, p->p_pid);
+		    l->l_proc->p_comm, l->l_proc->p_pid);
 #endif
 		return (ENOTTY);
 	}
