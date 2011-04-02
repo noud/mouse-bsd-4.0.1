@@ -275,22 +275,27 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	hwp = sa->hwif;
 	hdlp = sa->hdl;
 #ifdef DIAGNOSTIC
-	if (hwp == 0 ||
-	    hwp->query_encoding == 0 ||
-	    hwp->set_params == 0 ||
-	    (hwp->start_output == 0 && hwp->trigger_output == 0) ||
-	    (hwp->start_input == 0 && hwp->trigger_input == 0) ||
-	    hwp->halt_output == 0 ||
-	    hwp->halt_input == 0 ||
-	    hwp->getdev == 0 ||
-	    hwp->set_port == 0 ||
-	    hwp->get_port == 0 ||
-	    hwp->query_devinfo == 0 ||
-	    hwp->get_props == 0) {
-		printf(": missing method\n");
-		sc->hw_if = 0;
-		return;
+	{ int missing;
+	missing = 0;
+#define MISSING(str) do { printf(": missing method (%s)\n",(str)); \
+				missing = 1; } while (0)
+	if (hwp == 0) MISSING("no hwif");
+	if (hwp->query_encoding == 0) MISSING("query_encoding");
+	if (hwp->set_params == 0) MISSING("set_params");
+	if ((hwp->start_output == 0 && hwp->trigger_output == 0))
+		MISSING("output start/trigger");
+	if ((hwp->start_input == 0 && hwp->trigger_input == 0))
+		MISSING("input start/trigger");
+	if (hwp->halt_output == 0) MISSING("halt_output");
+	if (hwp->halt_input == 0) MISSING("halt_input");
+	if (hwp->getdev == 0) MISSING("getdev");
+	if (hwp->set_port == 0) MISSING("set_port");
+	if (hwp->get_port == 0) MISSING("get_port");
+	if (hwp->query_devinfo == 0) MISSING("query_devinfo");
+	if (hwp->get_props == 0) MISSING("get_props");
+	if (missing) return;
 	}
+#undef MISSING
 #endif
 
 	props = hwp->get_props(hdlp);
