@@ -296,6 +296,7 @@ set_timebase(void)
 	panic("no cpu node");
 
 found:
+	printf("CPU timebase frequency: %lu Hz\n",(unsigned long int)ticks_per_sec);    
 	/*
 	 * Should check for correct CPU here?		XXX
 	 */
