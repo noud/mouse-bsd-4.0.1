@@ -336,6 +336,9 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			if (error) {
 				goto done_locked;
 			}
+			if ((mbp->b_flags & B_ERROR) != 0) {
+				goto done_locked;
+			}
 			simple_unlock(&mbp->b_interlock);
 			if (obp != NULL) {
 				/*

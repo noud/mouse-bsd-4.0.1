@@ -1379,8 +1379,9 @@ static int
 stread(dev_t dev, struct uio *uio, int iomode)
 {
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
+	static struct buf buf;
 
-	return (physio(ststrategy, NULL, dev, B_READ,
+	return (physio(ststrategy, &buf, dev, B_READ,
 	    st->sc_periph->periph_channel->chan_adapter->adapt_minphys, uio));
 }
 
@@ -1388,8 +1389,9 @@ static int
 stwrite(dev_t dev, struct uio *uio, int iomode)
 {
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
+	static struct buf buf;
 
-	return (physio(ststrategy, NULL, dev, B_WRITE,
+	return (physio(ststrategy, &buf, dev, B_WRITE,
 	    st->sc_periph->periph_channel->chan_adapter->adapt_minphys, uio));
 }
 
