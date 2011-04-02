@@ -497,7 +497,7 @@ tcxioctl(dev, cmd, data, flags, l)
 	default:
 #ifdef DEBUG
 		log(LOG_NOTICE, "tcxioctl(0x%lx) (%s[%d])\n", cmd,
-		    p->p_comm, p->p_pid);
+		    l->l_proc->p_comm, l->l_proc->p_pid);
 #endif
 		return (ENOTTY);
 	}
