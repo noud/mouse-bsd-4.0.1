@@ -298,6 +298,13 @@ static int srt_if_output(
   { simple_unlock(&sc->lock);
     return(rv);
   }
+ if (dst->sa_family == AF_INET)
+  { struct ip *ip;
+    ip = mtod(m,struct ip *);
+    ip->ip_sum = 0;
+    ip->ip_sum = in_cksum(m,ip->ip_hl<<2);
+    m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
+  }
 #endif
  /*
   * We have to hold sc->lock across the underlying interface's output
