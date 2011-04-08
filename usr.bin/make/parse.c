@@ -1573,7 +1573,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 	if (!Var_Exists(line, ctxt))
 	    Var_Set(line, "", ctxt, 0);
 
-	cp = Var_Subst(NULL, cp, ctxt, FALSE);
+	cp = Var_Subst(NULL, cp, VAR_CMD, FALSE);
 	oldVars = oldOldVars;
 	freeCp = TRUE;
 
