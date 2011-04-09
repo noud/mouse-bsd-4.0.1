@@ -451,6 +451,7 @@ struct	sockaddr_in ipaddr = {
 	.sin_family = AF_INET,
 };
 struct	route ipforward_rt;
+typeof(time_second) ipforward_rt_stamp;
 
 /*
  * IP software interrupt routine
@@ -1678,7 +1679,9 @@ ip_rtaddr(struct in_addr dst)
 
 	sin = satosin(&ipforward_rt.ro_dst);
 
-	if (ipforward_rt.ro_rt == 0 || !in_hosteq(dst, sin->sin_addr)) {
+	if ( (ipforward_rt.ro_rt == 0) ||
+	     !in_hosteq(dst,sin->sin_addr) ||
+	     (time_second != ipforward_rt_stamp) ) {
 		if (ipforward_rt.ro_rt) {
 			RTFREE(ipforward_rt.ro_rt);
 			ipforward_rt.ro_rt = 0;
@@ -1688,6 +1691,8 @@ ip_rtaddr(struct in_addr dst)
 		sin->sin_addr = dst;
 
 		rtalloc(&ipforward_rt);
+
+		ipforward_rt_stamp = time_second;
 	}
 	if (ipforward_rt.ro_rt == 0)
 		return ((struct in_ifaddr *)0);
