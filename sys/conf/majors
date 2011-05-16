@@ -34,3 +34,4 @@ device-major	bio		char 181		bio
 device-major	twa		char 187		twa
 
 device-major	pfw		char 144		pfw
+device-major	synaptics	char 145		synaptics

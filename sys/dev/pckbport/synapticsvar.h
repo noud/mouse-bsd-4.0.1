@@ -75,6 +75,7 @@ struct synaptics_softc {
 	int	rem_x, rem_y;
 	u_int	movement_history;
 	int	history_x[SYN_HIST_SIZE], history_y[SYN_HIST_SIZE];
+	int	dev_unit;
 };
 
 int pms_synaptics_probe_init(void *vsc);

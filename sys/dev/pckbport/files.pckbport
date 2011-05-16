@@ -17,3 +17,6 @@ device	pms: wsmousedev
 attach	pms at pckbport
 file	dev/pckbport/pms.c		pms
 file	dev/pckbport/synaptics.c	pms & pms_synaptics_touchpad
+
+defpseudo synaptics
+file	dev/pckbport/synapticsdev.c	synaptics		needs-count

@@ -62,12 +62,20 @@
 
 #include <dev/pckbport/synapticsreg.h>
 #include <dev/pckbport/synapticsvar.h>
+#include <dev/pckbport/synapticsdev.h>
 
 #include <dev/pckbport/pmsreg.h>
 #include <dev/pckbport/pmsvar.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
+
+#include "synaptics.h"
+#if NSYNAPTICS < 1
+#define syndev_alloc_unit(x) (-1)
+#define syndev_setup(x) do { } while (0)
+#define syndev_input(x) (0)
+#endif
 
 /*
  * Absolute-mode packets are decoded and passed around using
@@ -139,6 +147,7 @@ pms_synaptics_probe_init(void *vsc)
 	int res, ver_minor, ver_major;
 	struct sysctllog *clog = NULL;
 
+	sc->dev_unit = -1;
 	res = pms_synaptics_send_command(psc->sc_kbctag, psc->sc_kbcslot,
 	    SYNAPTICS_IDENTIFY_TOUCHPAD);
 	cmd[0] = PMS_SEND_DEV_STATUS;
@@ -263,6 +272,12 @@ pms_synaptics_probe_init(void *vsc)
 	}
 
 done:
+	sc->dev_unit = syndev_alloc_unit(psc);
+	if (sc->dev_unit >= 0) {
+		syndev_setup(sc->dev_unit);
+		aprint_normal("%s: available as synaptics%d\n",
+			&psc->sc_dev.dv_xname[0],sc->dev_unit);
+	}
 	pms_sysctl_synaptics(&clog);
 	pckbport_set_inputhandler(psc->sc_kbctag, psc->sc_kbcslot,
 	    pms_synaptics_input, psc, psc->sc_dev.dv_xname);
@@ -797,6 +812,7 @@ pms_synaptics_input(void *vsc, int data)
 		 * Extract the pertinent details.
 		 */
 		psc->inputstate = 0;
+		if (syndev_input(psc)) return;
 
 		if ((psc->packet[0] & 0xfc) == 0x84 &&
 		    (psc->packet[3] & 0xcc) == 0xc4) {
