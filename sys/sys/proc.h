@@ -49,6 +49,7 @@
 #include <sys/lock.h>
 #include <sys/lwp.h>
 #include <sys/queue.h>
+#include <sys/param.h>
 #include <sys/callout.h>
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
