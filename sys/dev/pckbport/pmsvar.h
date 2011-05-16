@@ -28,6 +28,12 @@
 #ifndef _DEV_PCKBCPORT_PMSVAR_H_
 #define _DEV_PCKBCPORT_PMSVAR_H_
 
+#include "opt_pms.h"
+#include <sys/time.h>
+#include <sys/device.h>
+#include <dev/pckbport/pckbportvar.h>
+#include <dev/pckbport/synapticsvar.h>
+
 enum pms_type {
 	PMS_UNKNOWN,
 	PMS_STANDARD,
