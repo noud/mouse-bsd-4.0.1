@@ -66,7 +66,6 @@ extern void synapticsattach(int);
 void synapticsattach(int n)
 {
  maybe_init();
- printf("synapticsattach(%d)\n",n);
 }
 
 static void syn_queue_data(struct pms_softc *psc)
@@ -129,8 +128,6 @@ int syndev_input(struct pms_softc *psc)
  SOFTC *sc;
  int s;
  unsigned int flags;
- static typeof(time_second) tstamp;
- typeof(time_second) curts;
 
  ssc = &psc->u.synaptics;
  if (ssc->dev_unit < 0) return(0);
@@ -141,28 +138,13 @@ int syndev_input(struct pms_softc *psc)
  switch (flags & (SYNF_COPY|SYNF_STEAL))
   { case SYNF_COPY:
        syn_queue_data(psc);
-       curts = time_second;
-       if (curts != tstamp)
-	{ printf("c");
-	  tstamp = curts;
-	}
        return(0);
        break;
     case SYNF_STEAL:
        syn_queue_data(psc);
-       curts = time_second;
-       if (curts != tstamp)
-	{ printf("s");
-	  tstamp = curts;
-	}
        return(1);
        break;
     case 0:
-       curts = time_second;
-       if (curts != tstamp)
-	{ printf("-");
-	  tstamp = curts;
-	}
        return(0);
        break;
   }
