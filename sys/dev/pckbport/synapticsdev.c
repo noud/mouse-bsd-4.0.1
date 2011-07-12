@@ -48,7 +48,6 @@ static void maybe_init(void)
  SOFTC *sc;
 
  if (initted) return;
- aprint_normal("synaptics init\n");
  initted = 1;
  for (i=NSYNAPTICS-1;i>=0;i--)
   { sc = &softc_vec[i];
@@ -105,16 +104,13 @@ int syndev_alloc_unit(struct pms_softc *psc)
  SOFTC *sc;
 
  maybe_init();
- printf("syndev_alloc_unit for %s -> ",&psc->sc_dev.dv_xname[0]);
  for (i=0;i<NSYNAPTICS;i++)
   { sc = &softc_vec[i];
     if (sc->flags & SYNF_EXISTS) continue;
     sc->flags |= SYNF_EXISTS;
     sc->psc = psc;
-    printf("%d\n",i);
     return(i);
   }
- printf("fail\n");
  return(-1);
 }
 
@@ -158,25 +154,18 @@ static int synapticsopen(dev_t dev, int flag, int mode, struct lwp *p)
  SOFTC *sc;
  int s;
 
- printf("synapticsopen dev %x\n",dev);
  unit = minor(dev);
  kind = unit % 8;
  unit /= 8;
- printf("synapticsopen kind %u, unit %u\n",kind,unit);
- if (unit >= NSYNAPTICS)
-  { printf("synapticsopen ENXIO unit >= NSYNAPTICS (%d)\n",NSYNAPTICS);
-    return(ENXIO);
-  }
+ if (unit >= NSYNAPTICS) return(ENXIO);
  s = splhigh();
  sc = &softc_vec[unit];
  if (! (sc->flags & SYNF_EXISTS))
   { splx(s);
-    printf("synapticsopen ENXIO unit %d !SYNF_EXISTS\n",unit);
     return(ENXIO);
   }
  if (sc->flags & (SYNF_OPEN|SYNF_OLOCK))
   { splx(s);
-    printf("synapticsopen EBUSY unit %d flags %x\n",unit,sc->flags);
     return(EBUSY);
   }
  sc->flags |= SYNF_OLOCK;
@@ -196,13 +185,11 @@ static int synapticsopen(dev_t dev, int flag, int mode, struct lwp *p)
        break;
     default:
        splx(s);
-       printf("synapticsopen ENXIO bad kind %d\n",kind);
        return(ENXIO);
        break;
   }
  if (flag & O_NONBLOCK) sc->flags |= SYNF_NBIO; else sc->flags &= ~SYNF_NBIO;
  splx(s);
- printf("synapticsopen ok\n");
  return(0);
 }
 
