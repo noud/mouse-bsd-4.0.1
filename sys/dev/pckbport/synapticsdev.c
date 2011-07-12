@@ -273,7 +273,40 @@ static int synapticsread(dev_t dev, struct uio *uio, int ioflag)
 
 static int synapticswrite(dev_t dev, struct uio *uio, int ioflag)
 {
- return(EIO);
+ unsigned int unit;
+ SOFTC *sc;
+ int s;
+ unsigned int flags;
+ unsigned char cmd;
+ int e;
+
+ unit = minor(dev) / 8;
+ if (unit >= NSYNAPTICS) panic("writing out-of-range synaptics");
+ sc = &softc_vec[unit];
+ s = splhigh();
+ flags = sc->flags;
+ splx(s);
+ if (! (flags & SYNF_EXISTS)) panic("writing nonexistent synaptics");
+ if (! (flags & SYNF_OPEN)) panic("writing non-open synaptics");
+ if (uio->uio_resid > 0)
+  { e = uiomove(&cmd,1,uio);
+    if (e) return(e);
+    switch (cmd)
+     { case 's':
+	  flags = (flags & ~SYNF_COPY) | SYNF_STEAL;
+	  break;
+       case 'c':
+	  flags = (flags & ~SYNF_STEAL) | SYNF_COPY;
+	  break;
+       default:
+	  return(EIO);
+	  break;
+     }
+    s = splhigh();
+    sc->flags = flags;
+    splx(s);
+  }
+ return(0);
 }
 
 static int synapticsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *p)
