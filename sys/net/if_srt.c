@@ -1,3 +1,5 @@
+/* This file is in the public domain. */
+
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
 

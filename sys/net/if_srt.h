@@ -1,5 +1,7 @@
-#ifndef _IF_SRT_H_1416222e_
-#define _IF_SRT_H_1416222e_
+#ifndef _IF_SRT_H_09bb5795_
+#define _IF_SRT_H_09bb5795_
+
+/* This file is in the public domain. */
 
 #include <net/if.h>
 #include <netinet/in.h>
