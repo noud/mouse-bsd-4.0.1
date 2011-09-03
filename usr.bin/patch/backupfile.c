@@ -273,12 +273,12 @@ invalid_arg(const char *kind, const char *value, int problem)
 
 static const char *backup_args[] =
 {
-  "never", "simple", "nil", "existing", "t", "numbered", 0
+  "never", "simple", "nil", "existing", "t", "numbered", "none", 0
 };
 
 static enum backup_type backup_types[] =
 {
-  simple, simple, numbered_existing, numbered_existing, numbered, numbered
+  simple, simple, numbered_existing, numbered_existing, numbered, numbered, none
 };
 
 /* Return the type of backup indicated by VERSION.
