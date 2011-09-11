@@ -1433,6 +1433,68 @@ bad:
 		    sizeof(th->ending_track)));
 		return (copyout(toc.entries, te->data, len));
 	}
+	case CDIOREADTOCRAW:
+#define RAWTOC_MAXBUF 16384
+	      { /* Mostly a ripoff of part of mmc_gettrackinfo_cdrom().
+		   I don't like using ONSTACK for mallocked space, but
+		   it's what mmc_gettrackinfo_cmdrom() does. */
+		struct ioc_toc_raw tr;
+		struct scsipi_read_toc toccmd;
+		struct scsipi_toc_header *th;
+		bcopy(addr,&tr,sizeof(struct ioc_toc_raw));
+		void *buf;
+		int buflen;
+		unsigned int size;
+		unsigned int sizer;
+		buflen = tr.len;
+		if (buflen > RAWTOC_MAXBUF) buflen = RAWTOC_MAXBUF;
+		buf = malloc(buflen,M_TEMP,M_WAITOK);
+		bzero(&toccmd,sizeof(toccmd));
+		toccmd.opcode = READ_TOC;
+		toccmd.addr_mode = CD_MSF; /* irrelevant */
+		toccmd.resp_format = CD_TOC_RAW;
+		toccmd.from_track = 1; /* first session */
+		size = sizeof(struct scsipi_toc_header);
+		_lto2b(size,toccmd.data_len);
+printf("reading header, size = %d\n",size);
+		error = scsipi_command(periph,(void *)&toccmd,sizeof(toccmd),
+			buf,size,CDRETRIES,30000,0,
+			XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK|XS_CTL_SILENT);
+		if (error)
+		 { free(buf,M_TEMP);
+printf("reading header failed %d\n",error);
+		   return(error);
+		 }
+		th = buf;
+printf("reading header worked: length=(%d,%d) first=%d last=%d\n",
+th->length[0],th->length[1],th->first,th->last);
+		size = _2btol(th->length);
+		sizer = (size + 3) & ~3U;
+printf("size = %d\n",size);
+		if (sizer > buflen-2)
+		 { free(buf,M_TEMP);
+printf("size too large\n");
+		   return(ENOBUFS);
+		 }
+		_lto2b(sizer,toccmd.data_len);
+printf("reading full toc\n");
+		error = scsipi_command(periph,(void *)&toccmd,sizeof(toccmd),
+			buf,sizer,CDRETRIES,30000,0,
+			XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK|XS_CTL_SILENT);
+		if (error)
+		 { free(buf,M_TEMP);
+printf("reading full toc failed %d\n",error);
+		   return(error);
+		 }
+printf("reading full toc worked\n");
+		error = copyout(buf,tr.buf,size);
+		if (! error)
+		 { tr.len = size;
+		   bcopy(&tr,addr,sizeof(struct ioc_toc_raw));
+		 }
+		free(buf,M_TEMP);
+		return(error);
+	      }
 	case CDIOREADMSADDR: {
 		/* READ TOC format 0 command, length of first track only */
 		int sessno = *(int*)addr;
@@ -3422,4 +3484,3 @@ mmc_gettrackinfo(struct scsipi_periph *periph,
 
 	return 0;
 }
-

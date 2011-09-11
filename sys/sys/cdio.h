@@ -187,6 +187,13 @@ struct ioc_read_toc_entry {
 /* read LBA start of a given session; 0=last, others not yet supported */
 #define CDIOREADMSADDR _IOWR('c', 6, int)
 
+struct ioc_toc_raw {
+	void *buf;
+	unsigned int len;
+};
+
+#define CDIOREADTOCRAW _IOWR('c', 7, struct ioc_toc_raw)
+
 struct	ioc_patch {
 	u_char	patch[4];	/* one for each channel */
 };
