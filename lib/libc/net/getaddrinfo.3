@@ -309,9 +309,14 @@ int error;
 int s;
 const char *cause = NULL;
 
-memset(\*[Am]hints, 0, sizeof(hints));
+hints.ai_flags = 0;
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
+hints.ai_protocol = 0;
+hints.ai_addrlen = 0;
+hints.ai_addr = 0;
+hints.ai_canonname = 0;
+hints.ai_next = 0;
 error = getaddrinfo("www.kame.net", "http", \*[Am]hints, \*[Am]res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
@@ -342,7 +347,7 @@ if (s \*[Lt] 0) {
 freeaddrinfo(res0);
 .Ed
 .Pp
-The following example tries to open a wildcard listening socket onto service
+The following example tries to open wildcard listening sockets onto service
 .Dq Li http ,
 for all the address families available.
 .Bd -literal -offset indent
@@ -352,10 +357,14 @@ int s[MAXSOCK];
 int nsock;
 const char *cause = NULL;
 
-memset(\*[Am]hints, 0, sizeof(hints));
+hints.ai_flags = AI_PASSIVE;
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
-hints.ai_flags = AI_PASSIVE;
+hints.ai_protocol = 0;
+hints.ai_addrlen = 0;
+hints.ai_addr = 0;
+hints.ai_canonname = 0;
+hints.ai_next = 0;
 error = getaddrinfo(NULL, "http", \*[Am]hints, \*[Am]res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
