@@ -124,7 +124,7 @@ intpr(interval, ifnetaddr, pfunc)
 
 	if (Tflag)
 		dflag = 0;
-	if (sflag & !pflag && !Qflag) {
+	if (!sflag && !pflag && !Qflag) {
 		if (Tflag) {
 			printf("%-5.5s "
 			       "%10.10s %8.8s %12.12s "
