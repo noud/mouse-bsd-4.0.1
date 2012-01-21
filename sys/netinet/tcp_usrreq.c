@@ -706,12 +706,20 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 #endif /* TCP_SIGNATURE */
 
 		case TCP_NODELAY:
-			if (m == NULL || m->m_len < sizeof (int))
-				error = EINVAL;
-			else if (*mtod(m, int *))
-				tp->t_flags |= TF_NODELAY;
-			else
-				tp->t_flags &= ~TF_NODELAY;
+			{
+				unsigned int tflag;
+				tflag = TF_NODELAY;
+				if (0) {
+		case TCP_QUIETDROP:
+					tflag = TF_QUIETDROP;
+				}
+				if (m == NULL || m->m_len < sizeof (int))
+					error = EINVAL;
+				else if (*mtod(m, int *))
+					tp->t_flags |= tflag;
+				else
+					tp->t_flags &= ~tflag;
+			}
 			break;
 
 		case TCP_MAXSEG:
@@ -749,7 +757,10 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 #endif
 		case TCP_NODELAY:
-			*mtod(m, int *) = tp->t_flags & TF_NODELAY;
+			*mtod(m, int *) = (tp->t_flags & TF_NODELAY) ? 1 : 0;
+			break;
+		case TCP_QUIETDROP:
+			*mtod(m, int *) = (tp->t_flags & TF_QUIETDROP) ? 1 : 0;
 			break;
 		case TCP_MAXSEG:
 			*mtod(m, int *) = tp->t_peermss;

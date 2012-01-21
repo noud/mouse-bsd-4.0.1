@@ -117,5 +117,6 @@ struct tcphdr {
 /* Bits 0x04, 0x08 reserved for FreeBSD compatibility: TCP_NOPUSH, TCP_NOOPT */
 #define TCP_MD5SIG	0x10	/* use MD5 digests (RFC2385) */
 #define	TCP_CONGCTL	0x20	/* selected congestion control */
+#define TCP_QUIETDROP	0x40	/* don't RST in tcp_drop */
 
 #endif /* !_NETINET_TCP_H_ */
