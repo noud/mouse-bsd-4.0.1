@@ -107,7 +107,11 @@ Normally this address corresponds to the peer entity's network.
 supports a number of socket options which can be set with
 .Xr setsockopt 2
 and tested with
-.Xr getsockopt 2 :
+.Xr getsockopt 2 .
+The manifest constants (such as
+.Dv TCP_NODELAY )
+come from
+.Aq Pa netinet/tcp.h .
 .Bl -tag -width TCP_MD5SIGx
 .It Dv TCP_NODELAY
 Under most circumstances,
@@ -122,9 +126,7 @@ this packetization may cause significant delays.
 Therefore,
 .Tn TCP
 provides a boolean option,
-.Dv TCP_NODELAY
-(from
-.Aq Pa netinet/tcp.h ,
+.Dv TCP_NODELAY ,
 to defeat this algorithm.
 .It Dv TCP_MAXSEG
 By default, a sender- and receiver-TCP
