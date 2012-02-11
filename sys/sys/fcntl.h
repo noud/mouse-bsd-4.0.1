@@ -111,6 +111,7 @@
 #if defined(_NETBSD_SOURCE)
 #define	O_ALT_IO	0x00040000	/* use alternate i/o semantics */
 #define	O_DIRECT	0x00080000	/* direct I/O hint */
+#define	O_DIRECTORY	0x00100000	/* error unless directory */
 #endif
 
 /* defined by POSIX 1003.1; BSD default, but required to be bitwise distinct */
@@ -124,7 +125,8 @@
 /* all bits settable during open(2) */
 #define	O_MASK		(O_ACCMODE|O_NONBLOCK|O_APPEND|O_SHLOCK|O_EXLOCK|\
 			 O_ASYNC|O_SYNC|O_CREAT|O_TRUNC|O_EXCL|O_DSYNC|\
-			 O_RSYNC|O_NOCTTY|O_ALT_IO|O_NOFOLLOW|O_DIRECT)
+			 O_RSYNC|O_NOCTTY|O_ALT_IO|O_NOFOLLOW|O_DIRECT|\
+			 O_DIRECTORY)
 
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */

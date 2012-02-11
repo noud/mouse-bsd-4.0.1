@@ -1161,7 +1161,8 @@ sys_open(struct lwp *l, void *v, register_t *retval)
 	struct nameidata nd;
 
 	flags = FFLAGS(SCARG(uap, flags));
-	if ((flags & (FREAD | FWRITE)) == 0)
+	if ( ((flags & (FREAD | FWRITE)) == 0) ||
+	     ((flags & (O_DIRECTORY | O_CREAT)) == (O_DIRECTORY | O_CREAT)) )
 		return (EINVAL);
 	/* falloc() will use the file descriptor for us */
 	if ((error = falloc(l, &fp, &indx)) != 0)
@@ -1169,7 +1170,10 @@ sys_open(struct lwp *l, void *v, register_t *retval)
 	cmode = ((SCARG(uap, mode) &~ cwdi->cwdi_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
 	l->l_dupfd = -indx - 1;			/* XXX check for fdopen */
-	if ((error = vn_open(&nd, flags, cmode)) != 0) {
+	if ( ( (flags & O_DIRECTORY) &&
+	       (nd.ni_vp->v_type != VDIR) &&
+	       ((error = EISDIR), 1) ) ||
+	     ((error = vn_open(&nd, flags, cmode)) != 0) ) {
 		FILE_UNUSE(fp, l);
 		fdp->fd_ofiles[indx] = NULL;
 		ffree(fp);
