@@ -99,6 +99,9 @@
 #define	O_TRUNC		0x00000400	/* truncate to zero length */
 #define	O_EXCL		0x00000800	/* error if already exists */
 
+/* 0x1000 through 0x4000 are FMARK/FDEFER/FHASLOCK */
+/* 0x8000 is O_NOCTTY */
+
 #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
 #define	O_DSYNC		0x00010000	/* write: I/O data completion */
