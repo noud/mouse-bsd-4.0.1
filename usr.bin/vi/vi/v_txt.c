@@ -94,9 +94,9 @@ v_tcmd(sp, vp, prompt, flags)
 	/* Set the input flags. */
 	LF_SET(TXT_APPENDEOL |
 	    TXT_CR | TXT_ESCAPE | TXT_INFOLINE | TXT_MAPINPUT);
-	if (O_ISSET(sp, O_ALTWERASE))
+	if (o_ISSET(sp, o_ALTWERASE))
 		LF_SET(TXT_ALTWERASE);
-	if (O_ISSET(sp, O_TTYWERASE))
+	if (o_ISSET(sp, o_TTYWERASE))
 		LF_SET(TXT_TTYWERASE);
 
 	/* Do the input thing. */
@@ -209,7 +209,7 @@ txt_map_end(sp)
 		 * (logical) line.  Fix it.  If the user entered a whole
 		 * screen, this will be slow, but we probably don't care.
 		 */
-		if (!O_ISSET(sp, O_LEFTRIGHT))
+		if (!o_ISSET(sp, o_LEFTRIGHT))
 			while (vip->sv_tm_lno != TMAP->lno ||
 			    vip->sv_tm_soff != TMAP->soff)
 				if (vs_sm_1down(sp))
@@ -434,10 +434,10 @@ newtp:		if ((tp = text_init(sp, lp, len, len + 32)) == NULL)
 	 */
 	wm_set = wm_skip = 0;
 	if (LF_ISSET(TXT_WRAPMARGIN))
-		if ((margin = O_VAL(sp, O_WRAPMARGIN)) != 0)
+		if ((margin = o_VAL(sp, o_WRAPMARGIN)) != 0)
 			margin = sp->cols - margin;
 		else
-			margin = O_VAL(sp, O_WRAPLEN);
+			margin = o_VAL(sp, o_WRAPLEN);
 	else
 		margin = 0;
 
@@ -590,11 +590,11 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 		int L__cedit, L__filec;
 
 		L__cedit = L__filec = 0;
-		if (LF_ISSET(TXT_CEDIT) && O_STR(sp, O_CEDIT) != NULL &&
-		    O_STR(sp, O_CEDIT)[0] == evp->e_c)
+		if (LF_ISSET(TXT_CEDIT) && o_STR(sp, o_CEDIT) != NULL &&
+		    o_STR(sp, o_CEDIT)[0] == evp->e_c)
 			L__cedit = 1;
-		if (LF_ISSET(TXT_FILEC) && O_STR(sp, O_FILEC) != NULL &&
-		    O_STR(sp, O_FILEC)[0] == evp->e_c)
+		if (LF_ISSET(TXT_FILEC) && o_STR(sp, o_FILEC) != NULL &&
+		    o_STR(sp, o_FILEC)[0] == evp->e_c)
 			L__filec = 1;
 		if (L__cedit == 1 && (L__filec == 0 || tp->cno == tp->offset)) {
 			tp->term = TERM_CEDIT;
@@ -786,7 +786,7 @@ k_cr:		if (LF_ISSET(TXT_CR)) {
 				    ++p, ++tp->R_erase, --insert);
 		} else {
 			p = tp->lb + tp->cno + owrite;
-			if (O_ISSET(sp, O_AUTOINDENT))
+			if (o_ISSET(sp, o_AUTOINDENT))
 				for (; insert > 0 &&
 				    isblank(*p); ++p, --insert);
 			owrite = 0;
@@ -1743,7 +1743,7 @@ txt_ai_resolve(sp, tp, changedp)
 	 * in the line are resolved into the minimum number of characters.
 	 * Historic practice.
 	 */
-	ts = O_VAL(sp, O_TABSTOP);
+	ts = o_VAL(sp, o_TABSTOP);
 
 	/* Figure out the last <blank> screen column. */
 	for (p = tp->lb, scno = 0, len = tp->len,
@@ -1943,8 +1943,8 @@ txt_dent(sp, tp, isindent)
 	size_t cno, current, spaces, target, tabs;
 	int ai_reset;
 
-	ts = O_VAL(sp, O_TABSTOP);
-	sw = O_VAL(sp, O_SHIFTWIDTH);
+	ts = o_VAL(sp, o_TABSTOP);
+	sw = o_VAL(sp, o_SHIFTWIDTH);
 
 	/*
 	 * Since we don't know what precedes the character(s) being inserted
@@ -2626,7 +2626,7 @@ txt_isrch(sp, vp, tp, is_flagsp)
 	 * If it's a magic shell character, and not quoted, reset the cursor
 	 * to the starting point.
 	 */
-	if (strchr(O_STR(sp, O_SHELLMETA), tp->lb[tp->cno - 1]) != NULL &&
+	if (strchr(o_STR(sp, o_SHELLMETA), tp->lb[tp->cno - 1]) != NULL &&
 	    (tp->cno == 2 || tp->lb[tp->cno - 2] != '\\'))
 		vp->m_final = vp->m_start;
 
@@ -2831,7 +2831,7 @@ txt_showmatch(sp, tp)
 
 	/* Wait for timeout or character arrival. */
 	return (v_event_get(sp,
-	    NULL, O_VAL(sp, O_MATCHTIME) * 100, EC_TIMEOUT));
+	    NULL, o_VAL(sp, o_MATCHTIME) * 100, EC_TIMEOUT));
 }
 
 /*

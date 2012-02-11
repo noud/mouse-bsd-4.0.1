@@ -2,7 +2,7 @@
 #
 #	@(#)options.awk	10.1 (Berkeley) 6/8/95
  
-/^\/\* O_[0-9A-Z_]*/ {
+/^\/\* o_[0-9A-Z_]*/ {
 	opt = $2
 	printf("#define %s %d\n", opt, cnt++);
 	ofs = FS
@@ -19,5 +19,5 @@
 	next;
 }
 END {
-	printf("#define O_OPTIONCOUNT %d\n", cnt);
+	printf("#define o_OPTIONCOUNT %d\n", cnt);
 }

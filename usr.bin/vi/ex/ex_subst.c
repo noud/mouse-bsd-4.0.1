@@ -224,10 +224,10 @@ subagain:	return (ex_subagain(sp, cmdp));
 					++len;
 				} else if (p[1] == '~') {
 					++p;
-					if (!O_ISSET(sp, O_MAGIC))
+					if (!o_ISSET(sp, o_MAGIC))
 						goto tilde;
 				}
-			} else if (p[0] == '~' && O_ISSET(sp, O_MAGIC)) {
+			} else if (p[0] == '~' && o_ISSET(sp, o_MAGIC)) {
 tilde:				++p;
 				memcpy(t, sp->repl, sp->repl_len);
 				t += sp->repl_len;
@@ -387,7 +387,7 @@ s(sp, cmdp, s, re, flags)
 	 * O_EDCOMPATIBLE was set, they were initialized to 0 only if the user
 	 * specified substitute/replacement patterns (see ex_s()).
 	 */
-	if (!O_ISSET(sp, O_EDCOMPATIBLE))
+	if (!o_ISSET(sp, o_EDCOMPATIBLE))
 		sp->c_suffix = sp->g_suffix = 0;
 
 	/*
@@ -934,11 +934,11 @@ re_compile(sp, ptrn, plen, ptrnp, lenp, rep, flags)
 	/* Set RE flags. */
 	reflags = 0;
 	if (!LF_ISSET(RE_C_CSCOPE | RE_C_TAG)) {
-		if (O_ISSET(sp, O_EXTENDED))
+		if (o_ISSET(sp, o_EXTENDED))
 			reflags |= REG_EXTENDED;
-		if (O_ISSET(sp, O_IGNORECASE))
+		if (o_ISSET(sp, o_IGNORECASE))
 			reflags |= REG_ICASE;
-		if (O_ISSET(sp, O_ICLOWER)) {
+		if (o_ISSET(sp, o_ICLOWER)) {
 			for (p = ptrn, len = plen; len > 0; ++p, --len)
 				if (isupper((unsigned char)*p))
 					break;
@@ -1085,7 +1085,7 @@ re_conv(sp, ptrnp, plenp, replacedp)
 					needlen += sizeof(RE_WSTOP);
 					break;
 				case '~':
-					if (!O_ISSET(sp, O_MAGIC)) {
+					if (!o_ISSET(sp, o_MAGIC)) {
 						magic = 1;
 						needlen += sp->repl_len;
 					}
@@ -1093,7 +1093,7 @@ re_conv(sp, ptrnp, plenp, replacedp)
 				case '.':
 				case '[':
 				case '*':
-					if (!O_ISSET(sp, O_MAGIC)) {
+					if (!o_ISSET(sp, o_MAGIC)) {
 						magic = 1;
 						needlen += 1;
 					}
@@ -1105,7 +1105,7 @@ re_conv(sp, ptrnp, plenp, replacedp)
 				needlen += 1;
 			break;
 		case '~':
-			if (O_ISSET(sp, O_MAGIC)) {
+			if (o_ISSET(sp, o_MAGIC)) {
 				magic = 1;
 				needlen += sp->repl_len;
 			}
@@ -1113,7 +1113,7 @@ re_conv(sp, ptrnp, plenp, replacedp)
 		case '.':
 		case '[':
 		case '*':
-			if (!O_ISSET(sp, O_MAGIC)) {
+			if (!o_ISSET(sp, o_MAGIC)) {
 				magic = 1;
 				needlen += 2;
 			}
@@ -1149,7 +1149,7 @@ re_conv(sp, ptrnp, plenp, replacedp)
 					t += sizeof(RE_WSTOP) - 1;
 					break;
 				case '~':
-					if (O_ISSET(sp, O_MAGIC))
+					if (o_ISSET(sp, o_MAGIC))
 						*t++ = '~';
 					else {
 						memcpy(t,
@@ -1160,7 +1160,7 @@ re_conv(sp, ptrnp, plenp, replacedp)
 				case '.':
 				case '[':
 				case '*':
-					if (O_ISSET(sp, O_MAGIC))
+					if (o_ISSET(sp, o_MAGIC))
 						*t++ = '\\';
 					*t++ = *p;
 					break;
@@ -1172,7 +1172,7 @@ re_conv(sp, ptrnp, plenp, replacedp)
 				*t++ = '\\';
 			break;
 		case '~':
-			if (O_ISSET(sp, O_MAGIC)) {
+			if (o_ISSET(sp, o_MAGIC)) {
 				memcpy(t, sp->repl, sp->repl_len);
 				t += sp->repl_len;
 			} else
@@ -1181,7 +1181,7 @@ re_conv(sp, ptrnp, plenp, replacedp)
 		case '.':
 		case '[':
 		case '*':
-			if (!O_ISSET(sp, O_MAGIC))
+			if (!o_ISSET(sp, o_MAGIC))
 				*t++ = '\\';
 			*t++ = *p;
 			break;
@@ -1426,7 +1426,7 @@ re_sub(sp, ip, lbp, lbclenp, lblenp, match)
 	for (rp = sp->repl, rpl = sp->repl_len, p = lb + lbclen; rpl--;) {
 		switch (ch = *rp++) {
 		case '&':
-			if (O_ISSET(sp, O_MAGIC)) {
+			if (o_ISSET(sp, o_MAGIC)) {
 				no = 0;
 				goto subzero;
 			}
@@ -1438,7 +1438,7 @@ re_sub(sp, ip, lbp, lbclenp, lblenp, match)
 			switch (ch = *rp) {
 			case '&':
 				++rp;
-				if (!O_ISSET(sp, O_MAGIC)) {
+				if (!o_ISSET(sp, o_MAGIC)) {
 					no = 0;
 					goto subzero;
 				}

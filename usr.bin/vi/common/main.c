@@ -274,16 +274,16 @@ editor(gp, argc, argv)
 					/* Command-line options. */
 #ifdef GTAGS
 	if (gtags)
-		*oargp++ = O_GTAGSMODE;
+		*oargp++ = o_GTAGSMODE;
 #endif
 	if (lflag) {
-		*oargp++ = O_LISP;
-		*oargp++ = O_SHOWMATCH;
+		*oargp++ = o_LISP;
+		*oargp++ = o_SHOWMATCH;
 	}
 	if (readonly)
-		*oargp++ = O_READONLY;
+		*oargp++ = o_READONLY;
 	if (secure)
-		*oargp++ = O_SECURE;
+		*oargp++ = o_SECURE;
 	*oargp = -1;			/* Options initialization. */
 	if (opts_init(sp, oargs))
 		goto err;
@@ -300,15 +300,15 @@ editor(gp, argc, argv)
 		(void)opts_set(sp, av, NULL);
 	}
 	if (silent) {			/* Ex batch mode option values. */
-		O_CLR(sp, O_AUTOPRINT);
-		O_CLR(sp, O_PROMPT);
-		O_CLR(sp, O_VERBOSE);
-		O_CLR(sp, O_WARN);
+		o_CLR(sp, o_AUTOPRINT);
+		o_CLR(sp, o_PROMPT);
+		o_CLR(sp, o_VERBOSE);
+		o_CLR(sp, o_WARN);
 		F_SET(sp, SC_EX_SILENT);
 	}
 
-	sp->rows = O_VAL(sp, O_LINES);	/* Make ex formatting work. */
-	sp->cols = O_VAL(sp, O_COLUMNS);
+	sp->rows = o_VAL(sp, o_LINES);	/* Make ex formatting work. */
+	sp->cols = o_VAL(sp, o_COLUMNS);
 
 	if (!silent && startup) {	/* Read EXINIT, exrc files. */
 		if (ex_exrc(sp))
@@ -342,7 +342,7 @@ editor(gp, argc, argv)
 	 * option did not alter the default scrolling value, only giving
 	 * a count to ^D/^U did that.
 	 */
-	sp->defscroll = (O_VAL(sp, O_WINDOW) + 1) / 2;
+	sp->defscroll = (o_VAL(sp, o_WINDOW) + 1) / 2;
 
 	/*
 	 * If we don't have a command-line option, switch into the right

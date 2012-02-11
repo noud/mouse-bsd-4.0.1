@@ -307,7 +307,7 @@ v_change(sp, vp)
 	lmode = F_ISSET(vp, VM_LMODE) ? CUT_LINEMODE : 0;
 	if (lmode) {
 		vp->m_start.cno = 0;
-		if (O_ISSET(sp, O_AUTOINDENT)) {
+		if (o_ISSET(sp, o_AUTOINDENT)) {
 			if (nonblank(sp, vp->m_start.lno, &vp->m_start.cno))
 				return (1);
 			LF_SET(TXT_AICHARS);
@@ -495,17 +495,17 @@ set_txt_std(sp, vp, flags)
 	if (F_ISSET(vp, VC_ISDOT))
 		LF_SET(TXT_REPLAY);
 
-	if (O_ISSET(sp, O_ALTWERASE))
+	if (o_ISSET(sp, o_ALTWERASE))
 		LF_SET(TXT_ALTWERASE);
-	if (O_ISSET(sp, O_AUTOINDENT))
+	if (o_ISSET(sp, o_AUTOINDENT))
 		LF_SET(TXT_AUTOINDENT);
-	if (O_ISSET(sp, O_BEAUTIFY))
+	if (o_ISSET(sp, o_BEAUTIFY))
 		LF_SET(TXT_BEAUTIFY);
-	if (O_ISSET(sp, O_SHOWMATCH))
+	if (o_ISSET(sp, o_SHOWMATCH))
 		LF_SET(TXT_SHOWMATCH);
 	if (F_ISSET(sp, SC_SCRIPT))
 		LF_SET(TXT_CR);
-	if (O_ISSET(sp, O_TTYWERASE))
+	if (o_ISSET(sp, o_TTYWERASE))
 		LF_SET(TXT_TTYWERASE);
 
 	/*
@@ -537,7 +537,7 @@ set_txt_std(sp, vp, flags)
 	 * Once I work my courage up, this is all gonna go away.  It's too
 	 * evil to survive.
 	 */
-	if ((O_ISSET(sp, O_WRAPLEN) || O_ISSET(sp, O_WRAPMARGIN)) &&
+	if ((o_ISSET(sp, o_WRAPLEN) || o_ISSET(sp, o_WRAPMARGIN)) &&
 	    (!MAPPED_KEYS_WAITING(sp) || !F_ISSET(vp, VC_C1SET)))
 		LF_SET(TXT_WRAPMARGIN);
 	return (flags);

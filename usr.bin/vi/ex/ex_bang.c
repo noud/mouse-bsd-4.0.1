@@ -109,10 +109,10 @@ ex_bang(sp, cmdp)
 	if (cmdp->addrcnt == 0) {
 		msg = NULL;
 		if (sp->ep != NULL && F_ISSET(sp->ep, F_MODIFIED))
-			if (O_ISSET(sp, O_AUTOWRITE)) {
+			if (o_ISSET(sp, o_AUTOWRITE)) {
 				if (file_aw(sp, FS_ALL))
 					return (0);
-			} else if (O_ISSET(sp, O_WARN) &&
+			} else if (o_ISSET(sp, o_WARN) &&
 			    !F_ISSET(sp, SC_EX_SILENT))
 				msg = msg_cat(sp,
 				    "303|File modified since last write.",

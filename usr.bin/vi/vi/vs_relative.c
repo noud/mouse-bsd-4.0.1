@@ -51,9 +51,9 @@ vs_column(sp, colp)
 		return 0;
 	}
 
-	*colp = (O_ISSET(sp, O_LEFTRIGHT) ?
+	*colp = (o_ISSET(sp, o_LEFTRIGHT) ?
 	    vip->sc_smap->coff : (vip->sc_smap->soff - 1) * sp->cols) +
-	    vip->sc_col - (O_ISSET(sp, O_NUMBER) ? O_NUMBER_LENGTH : 0);
+	    vip->sc_col - (o_ISSET(sp, o_NUMBER) ? o_NUMBER_LENGTH : 0);
 	return (0);
 }
 
@@ -74,7 +74,7 @@ vs_screens(sp, lno, cnop)
 	size_t cols, screens;
 
 	/* Left-right screens are simple, it's always 1. */
-	if (O_ISSET(sp, O_LEFTRIGHT))
+	if (o_ISSET(sp, o_LEFTRIGHT))
 		return (1);
 
 	/*
@@ -130,8 +130,8 @@ vs_columns(sp, lp, lno, cnop, diffp)
 	last = 0;	/* XXXGCC -Wuninitialized */
 
 	/* Leading number if O_NUMBER option set. */
-	if (O_ISSET(sp, O_NUMBER))
-		scno += O_NUMBER_LENGTH;
+	if (o_ISSET(sp, o_NUMBER))
+		scno += o_NUMBER_LENGTH;
 
 	/* Need the line to go any further. */
 	if (lp == NULL) {
@@ -148,8 +148,8 @@ done:		if (diffp != NULL)		/* XXX */
 	}
 
 	/* Store away the values of the list and leftright edit options. */
-	listset = O_ISSET(sp, O_LIST);
-	leftright = O_ISSET(sp, O_LEFTRIGHT);
+	listset = o_ISSET(sp, o_LIST);
+	leftright = o_ISSET(sp, o_LEFTRIGHT);
 
 	/*
 	 * Initialize the pointer into the buffer and current offset.
@@ -265,8 +265,8 @@ vs_colpos(sp, lno, cno)
 		return (0);
 
 	/* Store away the values of the list and leftright edit options. */
-	listset = O_ISSET(sp, O_LIST);
-	leftright = O_ISSET(sp, O_LEFTRIGHT);
+	listset = o_ISSET(sp, o_LIST);
+	leftright = o_ISSET(sp, o_LEFTRIGHT);
 
 	/* Discard screen (logical) lines. */
 	off = cno / sp->cols;

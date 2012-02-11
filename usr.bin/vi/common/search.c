@@ -198,7 +198,7 @@ f_search(sp, fm, rm, ptrn, plen, eptrn, flags)
 			coff = 0;
 			lno = fm->lno + 1;
 			if (db_get(sp, lno, 0, &l, &len)) {
-				if (!O_ISSET(sp, O_WRAPSCAN)) {
+				if (!o_ISSET(sp, o_WRAPSCAN)) {
 					if (LF_ISSET(SEARCH_MSG))
 						search_msg(sp, S_EOF);
 					return (1);
@@ -226,7 +226,7 @@ f_search(sp, fm, rm, ptrn, plen, eptrn, flags)
 					search_msg(sp, S_NOTFOUND);
 				break;
 			}
-			if (!O_ISSET(sp, O_WRAPSCAN)) {
+			if (!o_ISSET(sp, o_WRAPSCAN)) {
 				if (LF_ISSET(SEARCH_MSG))
 					search_msg(sp, S_EOF);
 				break;
@@ -344,7 +344,7 @@ b_search(sp, fm, rm, ptrn, plen, eptrn, flags)
 		coff = fm->cno + 1;
 	} else {
 		if (fm->cno == 0) {
-			if (fm->lno == 1 && !O_ISSET(sp, O_WRAPSCAN)) {
+			if (fm->lno == 1 && !o_ISSET(sp, o_WRAPSCAN)) {
 				if (LF_ISSET(SEARCH_MSG))
 					search_msg(sp, S_SOF);
 				return (1);
@@ -372,7 +372,7 @@ b_search(sp, fm, rm, ptrn, plen, eptrn, flags)
 					search_msg(sp, S_NOTFOUND);
 				break;
 			}
-			if (!O_ISSET(sp, O_WRAPSCAN)) {
+			if (!o_ISSET(sp, o_WRAPSCAN)) {
 				if (LF_ISSET(SEARCH_MSG))
 					search_msg(sp, S_SOF);
 				break;

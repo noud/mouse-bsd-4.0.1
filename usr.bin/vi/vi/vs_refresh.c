@@ -103,7 +103,7 @@ vs_refresh(sp, forcepaint)
 	 */
 	pub_paint = SC_SCR_REFORMAT | SC_SCR_REDRAW;
 	priv_paint = VIP_CUR_INVALID | VIP_N_REFRESH;
-	if (O_ISSET(sp, O_NUMBER))
+	if (o_ISSET(sp, o_NUMBER))
 		priv_paint |= VIP_N_RENUMBER;
 	for (tsp = gp->dq.cqh_first;
 	    tsp != (void *)&gp->dq; tsp = tsp->q.cqe_next)
@@ -400,7 +400,7 @@ top:		if (vs_sm_fill(sp, LNO, P_TOP))
 	 * scrolling hundreds of lines.  If the adjustment looks like it's
 	 * going to be a serious problem, refill the screen and repaint.
 	 */
-adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
+adjust:	if (!o_ISSET(sp, o_LEFTRIGHT) &&
 	    (LNO == HMAP->lno || LNO == TMAP->lno)) {
 		cnt = vs_screens(sp, LNO, &CNO);
 		if (LNO == HMAP->lno && cnt < HMAP->soff)
@@ -430,7 +430,7 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 	 * the right screen is up.
 	 */
 	if (F_ISSET(sp, SC_SCR_REDRAW)) {
-		if (O_ISSET(sp, O_LEFTRIGHT))
+		if (o_ISSET(sp, o_LEFTRIGHT))
 			goto slow;
 		goto paint;
 	}
@@ -597,21 +597,21 @@ slow:	for (smp = HMAP; smp->lno != LNO; ++smp);
 	 * the current column, making sure that we adjust differently for the
 	 * first screen as compared to subsequent ones.
 	 */
-	if (O_ISSET(sp, O_LEFTRIGHT)) {
+	if (o_ISSET(sp, o_LEFTRIGHT)) {
 		/*
 		 * Get the screen column for this character, and correct
 		 * for the number option offset.
 		 */
 		cnt = vs_columns(sp, NULL, LNO, &CNO, NULL);
-		if (O_ISSET(sp, O_NUMBER))
-			cnt -= O_NUMBER_LENGTH;
+		if (o_ISSET(sp, o_NUMBER))
+			cnt -= o_NUMBER_LENGTH;
 
 		/* Adjust the window towards the beginning of the line. */
 		off = smp->coff;
 		if (off >= cnt) {
 			do {
-				if (off >= O_VAL(sp, O_SIDESCROLL))
-					off -= O_VAL(sp, O_SIDESCROLL);
+				if (off >= o_VAL(sp, o_SIDESCROLL))
+					off -= o_VAL(sp, o_SIDESCROLL);
 				else {
 					off = 0;
 					break;
@@ -624,7 +624,7 @@ slow:	for (smp = HMAP; smp->lno != LNO; ++smp);
 		if (off == 0 && off + SCREEN_COLS(sp) < cnt ||
 		    off != 0 && off + sp->cols < cnt) {
 			do {
-				off += O_VAL(sp, O_SIDESCROLL);
+				off += o_VAL(sp, o_SIDESCROLL);
 			} while (off + sp->cols < cnt);
 
 shifted:		/* Fill in screen map with the new offset. */
@@ -720,7 +720,7 @@ done_cursor:
 	 * didn't repaint the screen, repaint all of the line numbers,
 	 * they've changed.
 	 */
-number:	if (O_ISSET(sp, O_NUMBER) &&
+number:	if (o_ISSET(sp, o_NUMBER) &&
 	    F_ISSET(vip, VIP_N_RENUMBER) && !didpaint && vs_number(sp))
 		return (1);
 
@@ -863,7 +863,7 @@ vs_modeline(sp)
 	 * column on the screen.
 	 */
 	cols = sp->cols - 1;
-	if (O_ISSET(sp, O_RULER)) {
+	if (o_ISSET(sp, o_RULER)) {
 		vs_column(sp, &curcol);
 		len = snprintf(buf, sizeof(buf), "%lu,%lu",
 		    (unsigned long) sp->lno, (unsigned long) (curcol + 1));
@@ -886,7 +886,7 @@ vs_modeline(sp)
 	 */
 #define	MODESIZE	9
 	endpoint = cols;
-	if (O_ISSET(sp, O_SHOWMODE)) {
+	if (o_ISSET(sp, o_SHOWMODE)) {
 		if (F_ISSET(sp->ep, F_MODIFIED))
 			--endpoint;
 		t = msg_cat(sp, modes[sp->showmode], &len);
@@ -895,7 +895,7 @@ vs_modeline(sp)
 
 	if (endpoint > curlen + 2) {
 		(void)gp->scr_move(sp, LASTLINE(sp), endpoint);
-		if (O_ISSET(sp, O_SHOWMODE)) {
+		if (o_ISSET(sp, o_SHOWMODE)) {
 			if (F_ISSET(sp->ep, F_MODIFIED))
 				(void)gp->scr_addstr(sp,
 				    KEY_NAME(sp, '*'), KEY_LEN(sp, '*'));

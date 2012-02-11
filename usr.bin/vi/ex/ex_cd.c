@@ -103,8 +103,8 @@ ex_cd(sp, cmdp)
 	    (ap->bp[2] == '/' || ap->bp[2] == '\0'))
 		goto err;
 
-	/* Try the O_CDPATH option values. */
-	for (t = p = O_STR(sp, O_CDPATH);; ++p)
+	/* Try the o_CDPATH option values. */
+	for (t = p = o_STR(sp, o_CDPATH);; ++p)
 		if (*p == '\0' || *p == ':') {
 			/*
 			 * Empty strings specify ".".  The only way to get an

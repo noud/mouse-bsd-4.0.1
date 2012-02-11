@@ -155,7 +155,7 @@ ex_tag_push(sp, cmdp)
 
 		/* Taglength may limit the number of characters. */
 		if ((tl =
-		    O_VAL(sp, O_TAGLENGTH)) != 0 && strlen(exp->tag_last) > tl)
+		    o_VAL(sp, o_TAGLENGTH)) != 0 && strlen(exp->tag_last) > tl)
 			exp->tag_last[tl] = '\0';
 		break;
 	case 0:
@@ -170,7 +170,7 @@ ex_tag_push(sp, cmdp)
 
 	/* Get the tag information. */
 #ifdef GTAGS
-	if (O_ISSET(sp, O_GTAGSMODE)) {
+	if (o_ISSET(sp, o_GTAGSMODE)) {
 		tqp = gtag_slist(sp, exp->tag_last, F_ISSET(cmdp, E_REFERENCE));
 		if (tqp == NULL)
 			return (1);

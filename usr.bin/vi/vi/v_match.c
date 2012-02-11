@@ -60,7 +60,7 @@ v_match(sp, vp)
 	 * Making it an option lets the user decide what is 'right'.
 	 * Also fixed to do something sensible with "".
 	 */
-	match_chars = O_STR( sp, O_MATCHCHARS );
+	match_chars = o_STR( sp, o_MATCHCHARS );
 
 	/*
 	 * !!!

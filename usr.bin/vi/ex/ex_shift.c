@@ -78,7 +78,7 @@ shift(sp, cmdp, rl)
 
 	NEEDFILE(sp, cmdp);
 
-	if (O_VAL(sp, O_SHIFTWIDTH) == 0) {
+	if (o_VAL(sp, o_SHIFTWIDTH) == 0) {
 		msgq(sp, M_INFO, "152|shiftwidth option set to 0");
 		return (0);
 	}
@@ -98,7 +98,7 @@ shift(sp, cmdp, rl)
 	 * A: The Girl Scouts have mint cookies and adult supervision.
 	 */
 	for (p = cmdp->argv[0]->bp, sw = 0; *p == '>' || *p == '<'; ++p)
-		sw += O_VAL(sp, O_SHIFTWIDTH);
+		sw += o_VAL(sp, o_SHIFTWIDTH);
 
 	GET_SPACE_RET(sp, bp, blen, 256);
 
@@ -120,8 +120,8 @@ shift(sp, cmdp, rl)
 			if (p[oldidx] == ' ')
 				++oldcol;
 			else if (p[oldidx] == '\t')
-				oldcol += O_VAL(sp, O_TABSTOP) -
-				    oldcol % O_VAL(sp, O_TABSTOP);
+				oldcol += o_VAL(sp, o_TABSTOP) -
+				    oldcol % o_VAL(sp, o_TABSTOP);
 			else
 				break;
 
@@ -145,9 +145,9 @@ shift(sp, cmdp, rl)
 		 * characters it uses.
 		 */
 		for (tbp = bp, newidx = 0;
-		    newcol >= O_VAL(sp, O_TABSTOP); ++newidx) {
+		    newcol >= o_VAL(sp, o_TABSTOP); ++newidx) {
 			*tbp++ = '\t';
-			newcol -= O_VAL(sp, O_TABSTOP);
+			newcol -= o_VAL(sp, o_TABSTOP);
 		}
 		for (; newcol > 0; --newcol, ++newidx)
 			*tbp++ = ' ';

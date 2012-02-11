@@ -71,8 +71,8 @@ v_z(sp, vp)
 	 * O_WINDOW option, but that's not how it worked historically.
 	 */
 	if (F_ISSET(vp, VC_C2SET) && vp->count2 != 0) {
-		if (vp->count2 > O_VAL(sp, O_WINDOW))
-			vp->count2 = O_VAL(sp, O_WINDOW);
+		if (vp->count2 > o_VAL(sp, o_WINDOW))
+			vp->count2 = o_VAL(sp, o_WINDOW);
 		if (vs_crel(sp, vp->count2))
 			return (1);
 	}
