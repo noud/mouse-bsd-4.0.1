@@ -1161,7 +1161,7 @@ sys_open(struct lwp *l, void *v, register_t *retval)
 	struct nameidata nd;
 
 	flags = FFLAGS(SCARG(uap, flags));
-	if ( ((flags & (FREAD | FWRITE)) == 0) ||
+	if ( ((flags & (FREAD | FWRITE | O_DIRECTORY)) == 0) ||
 	     ((flags & (O_DIRECTORY | O_CREAT)) == (O_DIRECTORY | O_CREAT)) )
 		return (EINVAL);
 	/* falloc() will use the file descriptor for us */
@@ -1482,8 +1482,6 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 		return (error);
 
 	flags = FFLAGS(oflags);
-	if ((flags & (FREAD | FWRITE)) == 0)
-		return (EINVAL);
 	if ((flags & O_CREAT))
 		return (EINVAL);
 	/* falloc() will use the file descriptor for us */

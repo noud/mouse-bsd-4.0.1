@@ -97,6 +97,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.150.2.1 2007/05/13 10:28:37 jdc Exp 
 #include "opt_powerhook.h"
 #include "opt_tftproot.h"
 
+/*
+ * This needs to be defined in _one_ .c file which includes fcntl.h,
+ *  preferably one which doesn't use FFLAGS()/OFLAGS(); this seems like
+ *  the perfect one to pick.
+ */
+#define LIBRARY_FFLAGS_OFLAGS
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
