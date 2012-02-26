@@ -153,7 +153,9 @@ element of the request must meet the above alignment constraints.
 .It Dv O_DIRECTORY
 Error if the path names a non-directory.  It is invalid to combine this
 bit with
-.Dv O_CREAT .
+.Dv O_CREAT
+or
+.Dv O_TRUNC .
 .El
 .Pp
 Opening a file with

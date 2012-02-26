@@ -132,6 +132,11 @@ restart:
 
 	vp = ndp->ni_vp;
 
+	if ((fmode & O_DIRECTORY) && vp && (vp->v_type != VDIR)) {
+		error = ENOTDIR;
+		goto bad;
+	}
+
 #if NVERIEXEC > 0
 	error = veriexec_openchk(l, ndp->ni_vp, ndp->ni_dirp, fmode);
 	if (error)
