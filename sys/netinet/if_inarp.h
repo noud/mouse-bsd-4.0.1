@@ -42,6 +42,12 @@ struct llinfo_arp {
 #define la_timer la_rt->rt_rmx.rmx_expire /* deletion time in seconds */
 };
 
+/*
+ * This struct effectively gets overlaid with struct sockaddr_in in the
+ *  inetdomain routing table by the ARP table handling.  This is why
+ *  sin_zero has to exist; see the comment on struct sockaddr_in, in
+ *  in.h, for more.
+ */
 struct sockaddr_inarp {
 	u_int8_t  sin_len;
 	u_int8_t  sin_family;

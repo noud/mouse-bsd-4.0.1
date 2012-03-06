@@ -232,6 +232,20 @@ struct in_addr {
 
 /*
  * Socket address, internet style.
+ *
+ * sin_zero is, unfortunately, necessary - unless you want to redesign
+ *  all the ARP code.  inetdomain's routing table (see in_proto.c) must
+ *  be large enough to handle struct sockaddr_inarp (see if_inarp.h);
+ *  since the same routing table is used for sockaddr_in, we have to
+ *  pad this struct out to the same size as sockaddr_inarp.  (Knowing
+ *  that what we need is 8 bytes of padding is really gross, but it's
+ *  how this has historically been done, and I'm not sure how to do it
+ *  any better without even grosser botches.)
+ *
+ * That interfaces like bind(2) or routing socket messages pay
+ *  attention to what userland has in sin_zero is the real bug here.
+ *  (Well, that plus the abuse of the AF_INET routing table to hold
+ *  extra hidden data for structs sockaddr_inarp.)
  */
 struct sockaddr_in {
 	uint8_t		sin_len;

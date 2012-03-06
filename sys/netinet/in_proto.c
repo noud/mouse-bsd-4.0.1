@@ -301,6 +301,12 @@ const struct protosw inetsw[] = {
 
 extern struct ifqueue ipintrq;
 
+/*
+ * The routing table configuration here (the three struct elements
+ *  begining "rn_inithead") is, unfortunately, not very modifiable.
+ *  See the discussion of sin_zero in the comment on struct
+ *  sockaddr_in, in in.h, for the reasons for this.
+ */
 struct domain inetdomain = {
     PF_INET, "internet", 0, 0, 0,
     inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])],
