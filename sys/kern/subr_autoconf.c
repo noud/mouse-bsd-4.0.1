@@ -182,6 +182,9 @@ static int config_initialized;		/* config_init() has been called. */
 
 static int config_do_twiddle;
 
+static void (**attach_detach_hooks)(device_t, enum config_hook_op);
+static int n_attach_detach_hooks;
+
 /*
  * Initialize the autoconfiguration data structures.  Normally this
  * is done by configure(), but some platforms need to do this very
@@ -222,6 +225,9 @@ config_init(void)
 	TAILQ_INIT(&interrupt_config_queue);
 	TAILQ_INIT(&config_finalize_list);
 	TAILQ_INIT(&alldevs);
+
+	attach_detach_hooks = 0;
+	n_attach_detach_hooks = 0;
 
 	config_initialized = 1;
 }
@@ -896,6 +902,60 @@ config_makeroom(int n, struct cfdriver *cd)
 	cd->cd_devs = nsp;
 }
 
+int config_set_attach_detach_hook(void (*hook)(device_t, enum config_hook_op))
+{
+ int i;
+
+ if (cold) panic("setting attach/detach hook during coldstart");
+ for (i=0;i<n_attach_detach_hooks;i++)
+  { if (! attach_detach_hooks[i]) break;
+  }
+ if (i >= n_attach_detach_hooks)
+  { int n;
+    __typeof__(attach_detach_hooks[0]) *new;
+    n = (n_attach_detach_hooks ? : 2) * 2;
+    new = malloc(n*sizeof(*new),M_DEVBUF,M_WAITOK);
+    if (new == 0) panic("attach/detach hook array malloc failure");
+    if (n_attach_detach_hooks)
+     { bcopy(attach_detach_hooks,new,n_attach_detach_hooks*sizeof(*new));
+       free(attach_detach_hooks,M_DEVBUF);
+     }
+    i = n_attach_detach_hooks;
+    while (n_attach_detach_hooks < n) new[n_attach_detach_hooks++] = 0;
+    attach_detach_hooks = new;
+  }
+ attach_detach_hooks[i] = hook;
+ return(i);
+}
+
+void config_clear_attach_detach_hook(int inx)
+{
+ if ( (inx < 0) ||
+      (inx >= n_attach_detach_hooks) ||
+      !attach_detach_hooks[inx] )
+  { panic("clearing nonexistent attach/detach hook");
+  }
+ attach_detach_hooks[inx] = 0;
+}
+
+static void call_hooks(device_t dev, enum config_hook_op op)
+{
+ int i;
+
+ switch (op)
+  { case CONFIG_HOOK_ATTACH_REAL:
+    case CONFIG_HOOK_ATTACH_PSEUDO:
+    case CONFIG_HOOK_DETACH:
+       break;
+    default:
+       panic("call_hooks: bad op %d",(int)op);
+       break;
+  }
+ for (i=n_attach_detach_hooks-1;i>=0;i--)
+  { if (attach_detach_hooks[i]) (*attach_detach_hooks[i])(dev,op);
+  }
+}
+
 /*
  * Attach a found device.  Allocates memory for device variables.
  */
@@ -1030,6 +1090,9 @@ config_attach_loc(device_t parent, cfdata_t cf,
 			}
 		}
 	}
+
+	call_hooks(dev,CONFIG_HOOK_ATTACH_REAL);
+
 #ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
 #endif
@@ -1138,6 +1201,8 @@ config_attach_pseudo(cfdata_t cf)
 		panic("config_attach_pseudo: duplicate %s", dev->dv_xname);
 	cd->cd_devs[dev->dv_unit] = dev;
 
+	call_hooks(dev,CONFIG_HOOK_ATTACH_PSEUDO);
+
 #if 0	/* XXXJRT not yet */
 #ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, NULL);	/* like a root node */
@@ -1224,11 +1289,13 @@ config_detach(device_t dev, int flags)
 	    d = TAILQ_NEXT(d, dv_list)) {
 		if (d->dv_parent == dev) {
 			printf("config_detach: detached device %s"
-			    " has children %s\n", dev->dv_xname, d->dv_xname);
+			    " has child %s\n", dev->dv_xname, d->dv_xname);
 			panic("config_detach");
 		}
 	}
 #endif
+
+	call_hooks(dev,CONFIG_HOOK_DETACH);
 
 	/* notify the parent that the child is gone */
 	if (dev->dv_parent) {

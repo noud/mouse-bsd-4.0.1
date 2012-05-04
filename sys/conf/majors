@@ -35,3 +35,4 @@ device-major	twa		char 187		twa
 
 device-major	pfw		char 144		pfw
 device-major	synaptics	char 145		synaptics
+device-major	devtree		char 146		devtree

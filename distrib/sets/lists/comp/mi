@@ -422,6 +422,7 @@
 ./usr/include/dev/pcmcia/pcmciachip.h		comp-obsolete		obsolete
 ./usr/include/dev/pcmcia/pcmciareg.h		comp-obsolete		obsolete
 ./usr/include/dev/pcmcia/pcmciavar.h		comp-obsolete		obsolete
+./usr/include/dev/pseudo/devtree-intf.h		comp-c-include
 ./usr/include/dev/raidframe/raidframeio.h	comp-c-include
 ./usr/include/dev/raidframe/raidframevar.h	comp-c-include
 ./usr/include/dev/ramdisk.h			comp-obsolete		obsolete

@@ -3,3 +3,6 @@ file	dev/pseudo/diskwatch.c		diskwatch		needs-count
 
 defpseudo pfw
 file	dev/pseudo/pfw.c		pfw			needs-flag
+
+defpseudo devtree
+file	dev/pseudo/devtree.c		devtree

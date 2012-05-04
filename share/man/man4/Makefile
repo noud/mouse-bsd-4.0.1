@@ -13,7 +13,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adt7467c.4 adv.4 \
 	cec.4 cgd.4 cfb.4 ch.4 ciphy.4 ciss.4 clcs.4 clct.4 clnp.4 \
 	clockctl.4 cltp.4 cmdide.4 cmpci.4 cms.4 cnw.4 \
 	com.4 crypto.4 cs80bus.4 cypide.4  geodeide.4 \
-	ddb.4 ddc.4 de.4 dge.4 dk.4 dmoverio.4 \
+	ddb.4 ddc.4 de.4 devtree.4 dge.4 dk.4 dmoverio.4 \
 	dmphy.4 dpt.4 dpti.4 drum.4 eap.4 ebus.4 edc.4 \
 	elmc.4 emuxki.4 en.4 envsys.4 ep.4 esh.4 esis.4 \
 	esa.4 esiop.4 esl.4 esm.4 eso.4 etherip.4 exphy.4 fast_ipsec.4 fd.4 \

@@ -338,6 +338,14 @@ device_t config_attach_loc(device_t, cfdata_t, const int *, void *, cfprint_t);
 device_t config_attach(device_t, cfdata_t, void *, cfprint_t);
 int	config_match(device_t, cfdata_t, void *);
 
+enum config_hook_op {
+  CONFIG_HOOK_ATTACH_REAL = 1,
+  CONFIG_HOOK_ATTACH_PSEUDO,
+  CONFIG_HOOK_DETACH
+  } ;
+int config_set_attach_detach_hook(void (*)(device_t, enum config_hook_op));
+void config_clear_attach_detach_hook(int);
+
 device_t config_attach_pseudo(cfdata_t);
 
 void	config_makeroom(int n, struct cfdriver *cd);
