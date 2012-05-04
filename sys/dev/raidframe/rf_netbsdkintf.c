@@ -1117,7 +1117,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			return(EINVAL);
 		if (rs->watchunit[DISKPART(dev)] != *(int *)data)
 			return(EBUSY);
-		rs->watchunit[DISKPART(dev)] = 0;
+		rs->watchunit[DISKPART(dev)] = -1;
 		return(0);
 #endif
 
