@@ -232,10 +232,6 @@ network_start()
 				fi
 				continue
 			fi
-			eval args=\"\$ifsetup_post_$int\"
-			if [ -n "$args" ]; then
-				eval "$args"
-			fi
 			configured_interfaces="$configured_interfaces $int"
 		done
 		echo "."
@@ -305,12 +301,24 @@ network_start()
 			else
 				ifconfig $int inet alias $addr netmask $net
 			fi
+			case " $configured_interfaces " in
+				*" $int "*)	;;
+				*)		configured_interfaces="$configured_interfaces $int"
+						;;
+			esac
 		done < /etc/ifaliases
 	fi
 
 	if [ "$done_aliases_messages" = "yes" ]; then
 		echo ""
 	fi
+
+	for int in lo $configured_interfaces; do
+		eval args=\"\$ifsetup_post_$int\"
+		if [ -n "$args" ]; then
+			eval "$args"
+		fi
+	done
 
 	# Check $defaultroute, then /etc/mygate, for the name or address
 	# of my IPv4 gateway host. If using a name, that name must be in
