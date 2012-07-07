@@ -755,6 +755,7 @@
 ./usr/include/dev/pci				base-c-usr
 ./usr/include/dev/pckbc				base-c-usr
 ./usr/include/dev/pcmcia			base-c-usr
+./usr/include/dev/pseudo			base-c-usr
 ./usr/include/dev/raidframe			base-c-usr
 ./usr/include/dev/rcons				base-obsolete		obsolete
 ./usr/include/dev/sbus				base-c-usr

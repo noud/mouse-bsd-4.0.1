@@ -776,6 +776,7 @@
 ./usr/share/man/cat4/ddc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/de.0			man-sys-catman		.cat
 ./usr/share/man/cat4/depca.0			man-sys-catman		.cat
+./usr/share/man/cat4/devtree.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dmoverio.0			man-sys-catman		.cat
@@ -3191,6 +3192,7 @@
 ./usr/share/man/man4/ddc.4			man-sys-man		.man
 ./usr/share/man/man4/de.4			man-sys-man		.man
 ./usr/share/man/man4/depca.4			man-sys-man		.man
+./usr/share/man/man4/devtree.4			man-sys-man		.man
 ./usr/share/man/man4/dge.4			man-sys-man		.man
 ./usr/share/man/man4/dk.4			man-sys-man		.man
 ./usr/share/man/man4/dmoverio.4			man-sys-man		.man
