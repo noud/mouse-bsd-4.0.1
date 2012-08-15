@@ -261,6 +261,7 @@
 #	openfirm OpenFirmware accessor
 #	pci*	PCI bus access devices
 #	pf	PF packet filter
+#	pfw*	Reflex packet filtering
 #	pow*	power management device (x68k)
 #	puffs	Pass-to-Userspace Framework File System
 #	px*	PixelStamp Xserver access
@@ -468,6 +469,7 @@ all)
 	makedev bpf
 	makedev tun0 tun1 tun2 tun3
 	makedev srt0 srt1 srt2 srt3
+	makedev pfw0
 	makedev ipl pf crypto random systrace
 	makedev lkm lockstat clockctl
 	makedev local
@@ -972,6 +974,18 @@ tun*)
 srt*)
 	unit=${i#srt}
 	mkdev srt$unit c %srt_chr% $unit
+	;;
+
+pfw*)
+	unit=${i#pfw}
+	makedir $i 0755
+	for x in 0.if.6 1.clear.2 2.serial.4 3.count.4 4.addrs.4 5.watch.2 6.add.2 7.del.2
+	do
+		x1=${x%%.*}
+		x3=${x##*.}
+		x2=${x%.*}; x2=${x2#*.}
+		mkdev $i/$x2 c %pfw_chr% $((($unit*8)+$x1)) ${x3}00
+	done
 	;;
 
 joy*)
