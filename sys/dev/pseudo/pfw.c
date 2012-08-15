@@ -25,8 +25,22 @@
 
 #include <dev/pseudo/pfw-kern.h>
 
+typedef struct softc SOFTC;
 typedef struct ftn FTN;
 typedef struct watch WATCH;
+
+#define PFWUNIT(m) ((m) >> 4)
+#define PFWKIND(m) ((m) & 15)
+
+struct softc {
+  int unit;
+  struct ifnet *fifp;
+  int nftn;
+  int aftn;
+  FTN **ftnv;
+  FTN *ftnr;
+  WATCH *watchers;
+  } ;
 
 struct watch {
   WATCH *link;
@@ -54,15 +68,11 @@ struct ftn {
   int hx;
   } ;
 
-static struct ifnet *fifp;
-static int nftn;
-static int aftn;
-static FTN **ftnv;
-static FTN *ftnr;
+static SOFTC pfw_softc[NPFW];
+static int maxlive;
 static int running;
 static int attached;
 static unsigned long long int serial;
-static WATCH *watchers;
 static struct proc *watchproc;
 DECLARE_TICKER_HANDLE
 DECLARE_INET_PFIL_HEAD
@@ -298,12 +308,12 @@ static int insert(FTN *f, FTN **up, FTN *uptr)
  * Search for the correct place and insert f, rebalancing as necessary.
  *  Return value is as for insert(), above.
  */
-static int search_insert(FTN *f)
+static int search_insert(FTN *f, FTN **rootp)
 {
  f->l = 0;
  f->r = 0;
  f->bal = 0;
- return(insert(f,&ftnr,0));
+ return(insert(f,rootp,0));
 }
 
 /*
@@ -311,7 +321,7 @@ static int search_insert(FTN *f)
  *  assumes that (a) f is already part of the tree and (b) the tree is
  *  self-consistent.
  */
-static void search_delete(FTN *f)
+static void search_delete(FTN *f, FTN **rootp)
 {
  FTN *u;
  FTN *l;
@@ -323,7 +333,7 @@ static void search_delete(FTN *f)
  u = f->u;
  l = f->l;
  r = f->r;
- up = u ? (u->l == f) ? &u->l : &u->r : &ftnr;
+ up = u ? (u->l == f) ? &u->l : &u->r : rootp;
  dr = u ? (u->l == f) ? 1 : -1 : 0;
  if (! f->r)
   { if (! f->l)
@@ -394,7 +404,7 @@ static void search_delete(FTN *f)
 		   u = v;
 		   continue;
 		 }
-		rebalance(&ftnr,0);
+		rebalance(rootp,0);
 		break <"delrebal">;
 	      }
 	     break;
@@ -409,11 +419,11 @@ static void search_delete(FTN *f)
 /*
  * Look up the FTN for an address; return nil if not found.
  */
-static FTN *search_find(u_int32_t a)
+static FTN *search_find(u_int32_t a, FTN *root)
 {
  FTN *f;
 
- f = ftnr;
+ f = root;
  while (1)
   { if (! f) return(0);
     if (f->addr == a) return(f);
@@ -433,7 +443,7 @@ static __inline__ u_int32_t nw__cvt_uint32t(u_int32_t v) { return(v); }
 static __inline__ struct mbuf *nw__cvt_mbuf_p(struct mbuf *v) { return(v); }
 static __inline__ int nw__cvt_int(int v) { return(v); }
 
-static void notify_watchers(char flgc, ...)
+static void notify_watchers(SOFTC *sc, char flgc, ...)
 #define NW__END  1
 #define NW_END NW__END
 #define NW__ADDR 2
@@ -448,7 +458,7 @@ static void notify_watchers(char flgc, ...)
  struct socket *so;
  struct mbuf *m0;
 
- wp = &watchers;
+ wp = &sc->watchers;
  while <"nextwatcher"> ((w = *wp))
   { do <"closethis">
      { so = w->f->f_data;
@@ -544,26 +554,26 @@ static void notify_watchers(char flgc, ...)
   }
 }
 
-static void ftn_clear(void)
+static void ftn_clear(SOFTC *sc)
 {
  int s;
  int n;
  FTN **v;
 
  s = splnet();
- n = nftn;
- v = ftnv;
- nftn = 0;
- aftn = 0;
- ftnv = 0;
- ftnr = 0;
- notify_watchers('z',NW_END);
+ n = sc->nftn;
+ v = sc->ftnv;
+ sc->nftn = 0;
+ sc->aftn = 0;
+ sc->ftnv = 0;
+ sc->ftnr = 0;
+ notify_watchers(sc,'z',NW_END);
  splx(s);
  for (n--;n>=0;n--) free(v[n],M_DEVBUF);
  if (v) free(v,M_DEVBUF);
 }
 
-static void heap_down(FTN *f)
+static void heap_down(int n, FTN **v, FTN *f)
 {
  int x;
  int l;
@@ -574,50 +584,50 @@ static void heap_down(FTN *f)
  while (1)
   { l = x + x + 1;
     r = l + 1;
-    if ((l < nftn) && (ftnv[l]->exp < f->exp))
-     { if ((r < nftn) && (ftnv[r]->exp < f->exp))
-	{ s = (ftnv[l]->exp < ftnv[r]->exp) ? l : r;
+    if ((l < n) && (v[l]->exp < f->exp))
+     { if ((r < n) && (v[r]->exp < f->exp))
+	{ s = (v[l]->exp < v[r]->exp) ? l : r;
 	}
        else
 	{ s = l;
 	}
      }
     else
-     { if ((r < nftn) && (ftnv[r]->exp < f->exp))
+     { if ((r < n) && (v[r]->exp < f->exp))
 	{ s = r;
 	}
        else
 	{ break;
 	}
      }
-    ftnv[s]->hx = x;
-    ftnv[x] = ftnv[s];
+    v[s]->hx = x;
+    v[x] = v[s];
     x = s;
   }
- ftnv[x] = f;
+ v[x] = f;
  f->hx = x;
 }
 
-static int verify_walk(FTN **pp, FTN *f, FTN *u)
+static int verify_walk(FTN **pp, FTN *f, FTN *u, int n, FTN **v)
 {
  int ld;
  int rd;
 
  if (f == 0) return(0);
- if ((f->hx < 0) || (f->hx >= nftn)) panic("pfw verify_walk: hx %d",f->hx);
- if (f != ftnv[f->hx]) panic("pfw verify_walk: %p != ftnv[%d]=%p",(void *)f,f->hx,(void *)ftnv[f->hx]);
+ if ((f->hx < 0) || (f->hx >= n)) panic("pfw verify_walk: hx %d",f->hx);
+ if (f != v[f->hx]) panic("pfw verify_walk: %p != v[%d]=%p",(void *)f,f->hx,(void *)v[f->hx]);
  if (f->u != u) panic("pfw verify_walk: %p->u=%p != %p",(void *)f,(void *)f->u,(void *)u);
- ld = verify_walk(pp,f->l,f);
+ ld = verify_walk(pp,f->l,f,n,v);
  if (*pp && ((*pp)->addr >= f->addr)) panic("pfw verify_walk: %p->addr (%08lx) >= %p->addr (%08lx)",(void *)*pp,(unsigned long int)(*pp)->addr,(void *)f,(unsigned long int)f->addr);
  *pp = f;
- rd = verify_walk(pp,f->r,f);
+ rd = verify_walk(pp,f->r,f,n,v);
  if ( ((ld == rd+1) && (f->bal == -1)) ||
       ((ld == rd) && (f->bal == 0)) ||
       ((ld == rd-1) && (f->bal == 1)) ) return(((ld>rd)?ld:rd)+1);
  panic("pfw verify_walk: %p ld=%d rd=%d bal=%d",(void *)f,ld,rd,f->bal);
 }
 
-static void verify(void)
+static void verify(SOFTC *sc)
 {
  int s;
  int i;
@@ -625,60 +635,68 @@ static void verify(void)
  FTN *p;
 
  s = splnet();
- for (i=0;i<nftn;i++)
-  { f = ftnv[i];
-    if (! f) panic("pfw verify: !ftnv[%d<%d]",i,nftn);
+ for (i=0;i<sc->nftn;i++)
+  { f = sc->ftnv[i];
+    if (! f) panic("pfw verify: !ftnv[%d<%d]",i,sc->nftn);
     if (f->hx != i) panic("pfw verify: ftnv[%d] hx %d",i,f->hx);
-    if (i && (f->exp < ftnv[(f->hx-1)>>1]->exp))
+    if (i && (f->exp < sc->ftnv[(f->hx-1)>>1]->exp))
      { panic("pfw verify: ftnv[%d]->exp (%lu) < ftnv[%d]->exp (%lu)",
 		f->hx,(unsigned long int)f->exp,
-		(f->hx-1)>>1,(unsigned long int)ftnv[(f->hx-1)>>1]->exp);
+		(f->hx-1)>>1,(unsigned long int)sc->ftnv[(f->hx-1)>>1]->exp);
      }
   }
  p = 0;
- verify_walk(&p,ftnr,0);
+ verify_walk(&p,sc->ftnr,0,sc->nftn,sc->ftnv);
  splx(s);
 }
 
-static void ftn_freshen(FTN *f)
+static void ftn_freshen(SOFTC *sc, FTN *f)
 {
  f->exp = MONO_TIME_SEC + 86400;
  f->upd = MONO_TIME_SEC + 3600;
- heap_down(f);
+ heap_down(sc->nftn,sc->ftnv,f);
  serial ++;
- verify();
+ verify(sc);
 }
 
-static void del_ftn(FTN *f)
+static void del_ftn(SOFTC *sc, FTN *f)
 {
  int x;
 
- search_delete(f);
+ search_delete(f,&sc->ftnr);
  serial ++;
  x = f->hx;
  free(f,M_DEVBUF);
- nftn --;
- if ((nftn > 0) && (x < nftn))
-  { f = ftnv[nftn];
+ sc->nftn --;
+ if ((sc->nftn > 0) && (x < sc->nftn))
+  { f = sc->ftnv[sc->nftn];
     f->hx = x;
-    heap_down(f);
+    heap_down(sc->nftn,sc->ftnv,f);
   }
- verify();
+ verify(sc);
 }
 
 static void ticker(void *arg __attribute__((__unused__)))
 {
+ int i;
+ SOFTC *sc;
  int s;
  FTN *f;
+ int wanttick;
 
+ wanttick = 0;
  s = splnet();
- while (nftn > 0)
-  { f = ftnv[0];
-    if (f->exp > MONO_TIME_SEC) break;
-    notify_watchers('d',NW_ADDR(f->addr),NW_END);
-    del_ftn(f);
+ for (i=NPFW-1;i>=0;i--)
+  { sc = &pfw_softc[i];
+    while (sc->nftn > 0)
+     { f = sc->ftnv[0];
+       if (f->exp > MONO_TIME_SEC) break;
+       notify_watchers(sc,'d',NW_ADDR(f->addr),NW_END);
+       del_ftn(sc,f);
+     }
+    if (sc->nftn > 0) wanttick = 1;
   }
- if (nftn > 0) RESET_TICKER(); else running = 0;
+ if (wanttick) RESET_TICKER(); else running = 0;
  splx(s);
 }
 
@@ -690,57 +708,57 @@ static int total_mbuf_len(struct mbuf *m)
  return(len);
 }
 
-static void add_block(u_int32_t addr, struct mbuf *pkt)
+static void add_block(SOFTC *sc, u_int32_t addr, struct mbuf *pkt)
 {
  FTN *f;
 
  f = malloc(sizeof(FTN),M_DEVBUF,M_NOWAIT);
  if (f == 0)
-  { notify_watchers('m',NW_ADDR(addr),NW_END);
+  { notify_watchers(sc,'m',NW_ADDR(addr),NW_END);
     return;
   }
- if (nftn >= aftn)
+ if (sc->nftn >= sc->aftn)
   { FTN **nv;
     int a;
-    a = aftn + 64;
+    a = sc->aftn + 64;
     nv = malloc(a*sizeof(FTN *),M_DEVBUF,M_NOWAIT);
     if (nv == 0)
      { free(f,M_DEVBUF);
-       notify_watchers('m',NW_ADDR(addr),NW_END);
+       notify_watchers(sc,'m',NW_ADDR(addr),NW_END);
        return;
      }
-    bcopy(ftnv,nv,nftn*sizeof(FTN *));
-    if (ftnv) free(ftnv,M_DEVBUF);
-    ftnv = nv;
-    aftn = a;
+    bcopy(sc->ftnv,nv,sc->nftn*sizeof(FTN *));
+    if (sc->ftnv) free(sc->ftnv,M_DEVBUF);
+    sc->ftnv = nv;
+    sc->aftn = a;
   }
  f->addr = addr;
- if (search_insert(f) == INSERT_DROP)
+ if (search_insert(f,&sc->ftnr) == INSERT_DROP)
   { free(f,M_DEVBUF);
-    f = search_find(addr);
+    f = search_find(addr,sc->ftnr);
     if (! f) panic("can't find duplicate");
-    ftn_freshen(f);
-    notify_watchers('f',NW_ADDR(addr),NW_INT(total_mbuf_len(pkt)),NW_MBUF(pkt),NW_END);
+    ftn_freshen(sc,f);
+    notify_watchers(sc,'f',NW_ADDR(addr),NW_INT(total_mbuf_len(pkt)),NW_MBUF(pkt),NW_END);
     return;
   }
  /* we know the new FTN belongs at the bottom of the heap */
- f->hx = nftn++;
- ftn_freshen(f); /* also stores into ftnv[], and calls verify() */
- notify_watchers('a',NW_ADDR(f->addr),NW_INT(total_mbuf_len(pkt)),NW_MBUF(pkt),NW_END);
+ f->hx = sc->nftn++;
+ ftn_freshen(sc,f); /* also stores into ftnv[], and calls verify() */
+ notify_watchers(sc,'a',NW_ADDR(f->addr),NW_INT(total_mbuf_len(pkt)),NW_MBUF(pkt),NW_END);
  if (! running)
   { RESET_TICKER();
     running = 1;
   }
 }
 
-static void del_block(u_int32_t addr)
+static void del_block(SOFTC *sc, u_int32_t addr)
 {
  FTN *f;
 
- f = search_find(addr);
+ f = search_find(addr,sc->ftnr);
  if (f == 0) return;
- notify_watchers('d',NW_ADDR(f->addr),NW_END);
- del_ftn(f);
+ notify_watchers(sc,'d',NW_ADDR(f->addr),NW_END);
+ del_ftn(sc,f);
 }
 
 static int pfw_hook(PFW_HOOK_ARGS)
@@ -749,90 +767,90 @@ static int pfw_hook(PFW_HOOK_ARGS)
  struct udphdr *uh;
  FTN *ftn;
  int s;
+ int i;
+ SOFTC *sc;
+ int rv;
  PFW_HOOK_LOCALS
 
  s = splnet();
- if (ifp != fifp)
-  { splx(s);
-    return(0);
-  }
- ftn = search_find(ntohl(ip->ip_src.s_addr));
- if (ftn)
-  { if (MONO_TIME_SEC > ftn->upd)
-     { ftn_freshen(ftn);
-       notify_watchers('f',NW_ADDR(ftn->addr),NW_INT(total_mbuf_len(*m)),NW_MBUF(*m),NW_END);
-     }
-    m_freem(*m);
-    splx(s);
-    return(1);
-  }
- if (ip->ip_v == 4)
-  { switch (ip->ip_p)
-     { case IPPROTO_TCP:
-	  *m = m_pullup(*m,hlen+sizeof(struct tcphdr));
-	  if (! *m)
-	   { splx(s);
-	     return(1);
-	   }
-	  th = (struct tcphdr *) (mtod(*m,char *) + hlen);
-	  switch (ntohs(th->th_dport))
-	   { case 137:
-	     case 138:
-	     case 139:
-		add_block(ntohl(ip->ip_src.s_addr),*m);
-		m_freem(*m);
-		splx(s);
-		return(1);
-		break;
-	   }
-	  break;
-       case IPPROTO_UDP:
-	  *m = m_pullup(*m,hlen+sizeof(struct udphdr));
-	  if (! *m)
-	   { splx(s);
-	     return(1);
-	   }
-	  uh = (struct udphdr *) (mtod(*m,char *) + hlen);
-	  switch (ntohs(uh->uh_dport))
-	   { case 137:
-	     case 138:
-	     case 139:
-		add_block(ntohl(ip->ip_src.s_addr),*m);
-		m_freem(*m);
-		splx(s);
-		return(1);
-		break;
-	   }
-	  break;
-     }
-  }
- switch (ntohl(ip->ip_dst.s_addr))
-  { case 0xd82e0500:
-    case 0xd82e050f:
-       add_block(ntohl(ip->ip_src.s_addr),*m);
-       m_freem(*m);
-       splx(s);
-       return(1);
-       break;
-    case 0xd82e0509:
-       if ((ip->ip_v == 4) && (ip->ip_p == IPPROTO_TCP))
-	{ *m = m_pullup(*m,hlen+sizeof(struct tcphdr));
-	  if (! *m)
-	   { splx(s);
-	     return(1);
-	   }
-	  th = (struct tcphdr *) (mtod(*m,char *) + hlen);
-	  if (ntohs(th->th_dport) == 25)
-	   { add_block(ntohl(ip->ip_src.s_addr),*m);
-	     m_freem(*m);
-	     splx(s);
-	     return(1);
-	   }
+ rv = 0;
+ for (i=maxlive;i>=0;i--)
+  { sc = &pfw_softc[i];
+    if (ifp != sc->fifp) continue;
+    ftn = search_find(ntohl(ip->ip_src.s_addr),sc->ftnr);
+    if (ftn)
+     { if (MONO_TIME_SEC > ftn->upd)
+	{ ftn_freshen(sc,ftn);
+	  notify_watchers(sc,'f',NW_ADDR(ftn->addr),NW_INT(total_mbuf_len(*m)),NW_MBUF(*m),NW_END);
 	}
-       break;
+       rv = 1;
+       continue;
+     }
+    if (ip->ip_v == 4)
+     { switch (ip->ip_p)
+	{ case IPPROTO_TCP:
+	     *m = m_pullup(*m,hlen+sizeof(struct tcphdr));
+	     if (! *m)
+	      { rv = 1;
+		continue;
+	      }
+	     th = (struct tcphdr *) (mtod(*m,char *) + hlen);
+	     switch (ntohs(th->th_dport))
+	      { case 137:
+		case 138:
+		case 139:
+		   add_block(sc,ntohl(ip->ip_src.s_addr),*m);
+		   rv = 1;
+		   continue;
+		   break;
+	      }
+	     break;
+	  case IPPROTO_UDP:
+	     *m = m_pullup(*m,hlen+sizeof(struct udphdr));
+	     if (! *m)
+	      { rv = 1;
+		continue;
+	      }
+	     uh = (struct udphdr *) (mtod(*m,char *) + hlen);
+	     switch (ntohs(uh->uh_dport))
+	      { case 137:
+		case 138:
+		case 139:
+		   add_block(sc,ntohl(ip->ip_src.s_addr),*m);
+		   rv = 1;
+		   continue;
+		   break;
+	      }
+	     break;
+	}
+     }
+    switch (ntohl(ip->ip_dst.s_addr))
+     { case 0xd82e0500:
+       case 0xd82e050f:
+	  add_block(sc,ntohl(ip->ip_src.s_addr),*m);
+	  rv = 1;
+	  continue;
+	  break;
+       case 0xd82e0509:
+	  if ((ip->ip_v == 4) && (ip->ip_p == IPPROTO_TCP))
+	   { *m = m_pullup(*m,hlen+sizeof(struct tcphdr));
+	     if (! *m)
+	      { rv = 1;
+		continue;
+	      }
+	     th = (struct tcphdr *) (mtod(*m,char *) + hlen);
+	     if (ntohs(th->th_dport) == 25)
+	      { add_block(sc,ntohl(ip->ip_src.s_addr),*m);
+		rv = 1;
+		continue;
+	      }
+	   }
+	  break;
+     }
   }
+ if (rv && *m) m_freem(*m);
  splx(s);
- return(0);
+ return(rv);
 }
 
 void pfwattach(int arg __attribute__((__unused__)))
@@ -843,18 +861,30 @@ void pfwattach(int arg __attribute__((__unused__)))
 
 DEVSW_SCLASS int pfwopen(dev_t dev, int flag, int mode, PROCTYPE p)
 {
+ unsigned int u;
+ SOFTC *sc;
+ int i;
+
+ u = PFWUNIT(minor(dev));
+ if (u >= NPFW) return(ENXIO);
  if (! attached)
-  { nftn = 0;
-    aftn = 0;
-    ftnv = 0;
-    ftnr = 0;
+  { for (i=NPFW-1;i>=0;i--)
+     { sc = &pfw_softc[i];
+       sc->unit = i;
+       sc->fifp = 0;
+       sc->nftn = 0;
+       sc->aftn = 0;
+       sc->ftnv = 0;
+       sc->ftnr = 0;
+       sc->watchers = 0;
+     }
     running = 0;
     serial = 0;
-    watchers = 0;
     watchproc = 0;
     SETUP_PFW_HOOK();
     TICKER_SETUP();
     attached = 1;
+    maxlive = -1;
   }
  return(0);
 }
@@ -867,6 +897,8 @@ DEVSW_SCLASS int pfwclose(dev_t dev, int flag, int mode, PROCTYPE p)
 DEVSW_SCLASS int pfwread(dev_t dev, struct uio *uio, int ioflag)
 {
  unsigned int unit;
+ unsigned int kind;
+ SOFTC *sc;
  off_t o;
  int owi;
  int e;
@@ -880,11 +912,15 @@ DEVSW_SCLASS int pfwread(dev_t dev, struct uio *uio, int ioflag)
  unsigned long long int val_ulli;
 
  unit = minor(dev);
+ kind = PFWKIND(unit);
+ unit = PFWUNIT(unit);
+ if (unit >= NPFW) return(ENXIO);
+ sc = &pfw_softc[unit];
  if (uio->uio_offset < 0) return(EINVAL);
- switch (unit)
+ switch (kind)
   { case 0:
-       if (fifp)
-	{ d = &fifp->if_xname[0];
+       if (sc->fifp)
+	{ d = &sc->fifp->if_xname[0];
 	  l = strlen(d);
 	}
        else
@@ -905,7 +941,7 @@ DEVSW_SCLASS int pfwread(dev_t dev, struct uio *uio, int ioflag)
        break;
     case 3:
        s = splnet();
-       val_ui = nftn;
+       val_ui = sc->nftn;
        splx(s);
        d = (void *) &val_ui;
        l = sizeof(val_ui);
@@ -916,11 +952,11 @@ DEVSW_SCLASS int pfwread(dev_t dev, struct uio *uio, int ioflag)
 	  owi = uio->uio_offset % 4;
 	  if (o < 0) return(EINVAL);
 	  s = splnet();
-	  if (o >= nftn)
+	  if (o >= sc->nftn)
 	   { splx(s);
 	     break;
 	   }
-	  val_32 = ftnv[o]->addr;
+	  val_32 = sc->ftnv[o]->addr;
 	  buf_32[0] = (val_32 >> 24) & 0xff;
 	  buf_32[1] = (val_32 >> 16) & 0xff;
 	  buf_32[2] = (val_32 >>  8) & 0xff;
@@ -942,12 +978,12 @@ DEVSW_SCLASS int pfwread(dev_t dev, struct uio *uio, int ioflag)
 
 static void watchproc_main(void *arg __attribute__((__unused__)))
 {
- while (1) tsleep(&watchers,PUSER,"forever",0);
+ while (1) tsleep(&watchproc,PUSER,"forever",0);
  /*kthread_exit(0);*/
 }
 
 /* curproc/curlwp is an implicit additional argument to addwatch() */
-static int addwatch(int fd)
+static int addwatch(SOFTC *sc, int fd)
 {
  struct file *fp;
  int e;
@@ -980,20 +1016,39 @@ static int addwatch(int fd)
  w->f = fp;
  w->errored = 0;
  s = splnet();
- w->link = watchers;
- watchers = w;
+ w->link = sc->watchers;
+ sc->watchers = w;
  splx(s);
  return(0);
+}
+
+static void reset_maxlive(void)
+{
+ int i;
+
+ for (i=NPFW-1;i>=0;i--)
+  { if (pfw_softc[i].fifp)
+     { maxlive = i;
+       return;
+     }
+  }
+ maxlive = -1;
 }
 
 DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 {
  unsigned int unit;
+ unsigned int kind;
+ SOFTC *sc;
  int e;
  int s;
 
  unit = minor(dev);
- switch (unit)
+ kind = PFWKIND(unit);
+ unit = PFWUNIT(unit);
+ if (unit >= NPFW) return(ENXIO);
+ sc = &pfw_softc[unit];
+ switch (kind)
   { case 0:
 	{ char xnbuf[64];
 	  int l;
@@ -1005,23 +1060,19 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 	  if (e) return(e);
 	  xnbuf[l] = '\0';
 	  if ((l == 1) && (xnbuf[0] == '-'))
-	   { fifp = 0;
+	   { sc->fifp = 0;
 	   }
 	  else
 	   { i = ifunit(&xnbuf[0]);
 	     if (i == 0) return(ENXIO);
-	     fifp = i;
+	     sc->fifp = i;
 	   }
+	  reset_maxlive();
 	}
        break;
     case 1:
        uio->uio_resid = 0;
-       ftn_clear();
-       break;
-    case 2:
-    case 3:
-    case 4:
-       return(EPERM);
+       ftn_clear(sc);
        break;
     case 5:
 	{ int fd;
@@ -1040,7 +1091,7 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 		break;
 	   }
 	  if (e) return(e);
-	  return(addwatch(fd));
+	  return(addwatch(sc,fd));
 	}
        break;
     case 6:
@@ -1052,13 +1103,13 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 	  if (e) return(e);
 	  s = splnet();
 	  v = (a[0]*0x1000000) + (a[1]*0x10000) + (a[2]*0x100) + a[3];
-	  f = search_find(v);
+	  f = search_find(v,sc->ftnr);
 	  if (f)
-	   { ftn_freshen(f);
-	     notify_watchers('f',NW_ADDR(v),NW_INT(0),NW_END);
+	   { ftn_freshen(sc,f);
+	     notify_watchers(sc,'f',NW_ADDR(v),NW_INT(0),NW_END);
 	   }
 	  else
-	   { add_block(v,0);
+	   { add_block(sc,v,0);
 	   }
 	  splx(s);
 	}
@@ -1069,9 +1120,12 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 	  e = uiomove(&a[0],4,uio);
 	  if (e) return(e);
 	  s = splnet();
-	  del_block((a[0]*0x1000000)+(a[1]*0x10000)+(a[2]*0x100)+a[3]);
+	  del_block(sc,(a[0]*0x1000000)+(a[1]*0x10000)+(a[2]*0x100)+a[3]);
 	  splx(s);
 	}
+       break;
+    default:
+       return(EPERM);
        break;
   }
  return(0);
