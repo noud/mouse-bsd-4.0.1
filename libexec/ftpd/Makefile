@@ -21,7 +21,7 @@ CPPFLAGS+=-DINET6
 
 WARNS=2
 
-.if (${USE_LOGIN_CAP} != "no")
+.if ("${USE_LOGIN_CAP}" != "no")
 CPPFLAGS+=-DLOGIN_CAP
 .endif
 .if (${USE_PAM} != "no")
