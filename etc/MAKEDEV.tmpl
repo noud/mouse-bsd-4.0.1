@@ -235,6 +235,7 @@
 #	cir*	Consumer IR
 #	clockctl clock control for non root users
 #	crypto	hardware crypto access driver
+#	diskwatch* disk write watching
 #	dmoverio hardware-assisted data movers
 #	dpt*	DPT/Adaptec EATA RAID management interface
 #	dpti*	DPT/Adaptec I2O RAID management interface
@@ -477,6 +478,7 @@ all)
 	makedev tap tap0 tap1 tap2 tap3
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	makedev bthub
+	makedev diskwatch0 diskwatch1 diskwatch2
 	;;
 
 init)
@@ -1636,6 +1638,13 @@ fw*)
 
 puffs)
 	mkdev puffs c %puffs_chr% 0x7ffff 600
+	;;
+
+diskwatch*)
+	unit=${i#diskwatch}
+	mkdev diskwatch${unit}ctl  c %diskwatch_chr% $(((${unit} * 4))) 600
+	mkdev diskwatch${unit}data c %diskwatch_chr% $(((${unit} * 4)+1)) 600
+	mkdev diskwatch${unit}dbg  c %diskwatch_chr% $(((${unit} * 4)+2)) 600
 	;;
 
 midevend)
