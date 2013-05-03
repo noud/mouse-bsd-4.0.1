@@ -369,3 +369,17 @@ and
 options, when specified together, combine to produce confusing and
 probably incorrect behavior: symlinks' modes will be changed, but they
 will be changed to a mode based on the linked-to object's mode.
+.Pp
+Because a
+.Ar mode
+argument may begin with a
+.Sq \&- ,
+there are certain ambiguities parsing the command line.  The major
+effect this has is that bundling flags together to produce an option
+argument which is exactly nine characters long will be mistaken for a
+mode specification (and will generally provoke an error).  This can be
+avoided by not bundling flags together (for example, using
+.Fl h
+.Fl R
+instead of
+.Fl hR ) .

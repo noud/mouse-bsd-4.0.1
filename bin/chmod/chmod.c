@@ -78,7 +78,25 @@ main(int argc, char *argv[])
 	(void)setlocale(LC_ALL, "");
 
 	Fflag = Hflag = Lflag = Rflag = fflag = hflag = 0;
-	while ((ch = getopt(argc, argv, "FHLPRXfghorstuwx")) != -1)
+
+ while (1)
+  { /*
+     * If we have a mode beginning with -, like --x--x--x, getopt will
+     *	confuse it with an option and get upset.  We don't bother
+     *	testing for a leading - because if we don't have one then we
+     *	want to break out of this loop anyway.  This depends on never
+     *	having a flag argument that's 9 characters long; there isn't
+     *	much of any way around that short of testing for conformance to
+     *	the ls-mode syntax, which is buried inside setmode(3).
+     *
+     * Yet another case where insisting on getopt(3) is the kind of
+     *	foolish consistency which Emerson so rightly called the
+     *	hobgoblin of little minds...not that avoding getopt would fix
+     *	everything, but it would reduce the kludgery called for.
+     */
+    if (strlen(argv[optind]) == 9) break;
+    ch = getopt(argc,argv,"FHLPRXfghorstuwx");
+    if (ch == -1) break;
 		switch (ch) {
 		case 'F':
 			Fflag = 1;
@@ -128,17 +146,9 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+  }
 done:	argv += optind;
 	argc -= optind;
-
-	/* If we have a mode beginning with --, like --x--x--x,
-	   getopt will mistake it for a -- end-of-flags indicator. */
-	if ( (argv[-1][0] == '-') &&
-	     (argv[-1][1] == '-') &&
-	     (strlen(argv[-1]) == 9) ) {
-		argc ++;
-		argv --;
-	}
 
 	if (argc < 2)
 		usage();
