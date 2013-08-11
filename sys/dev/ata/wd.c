@@ -374,7 +374,9 @@ static int hpa_check(struct device *self)
     maxcap ++; /* capacity is one more than max address */
     if (maxcap < curcap)
      { aprint_normal("\n%s: %s returned nonsense (max %llu < cur %llu)\n",
-		&self->dv_xname[0],cmdname,maxcap,curcap);
+		&self->dv_xname[0], cmdname,
+		(unsigned long long int) maxcap,
+		(unsigned long long int) curcap);
        return(0);
      }
     if (maxcap == curcap)
@@ -422,10 +424,16 @@ static int hpa_check(struct device *self)
 	}
        wd->sc_capacity = wd_capacity_from_params(wd);
        if (wd->sc_capacity != maxcap)
-	{ aprint_error("%s: WARNING: %s didn't work right (wanted %llu, got %llu)\n",&self->dv_xname[0],cmdname,maxcap,wd->sc_capacity);
+	{ aprint_error("%s: WARNING: %s didn't work right (wanted %llu, got %llu)\n",
+		&self->dv_xname[0], cmdname,
+		(unsigned long long int) maxcap,
+		(unsigned long long int) wd->sc_capacity );
 	}
        else
-	{ aprint_normal("%s: effective capacity raised from %llu to %llu\n",&self->dv_xname[0],curcap,wd->sc_capacity);
+	{ aprint_normal("%s: effective capacity raised from %llu to %llu\n",
+		&self->dv_xname[0],
+		(unsigned long long int) curcap,
+		(unsigned long long int) wd->sc_capacity);
 	}
      }
   }
