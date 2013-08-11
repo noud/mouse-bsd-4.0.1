@@ -26,6 +26,7 @@ __RCSID("$NetBSD: bootparamd.c,v 1.44 2004/10/30 15:23:30 dsl Exp $");
 #include <fnmatch.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
@@ -226,91 +227,96 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	return (NULL);
 }
 
-
-bp_getfile_res *
-bootparamproc_getfile_1_svc(getfile, rqstp)
-	bp_getfile_arg *getfile;
-	struct svc_req *rqstp;
+static void say(const char *, ...)
+	__attribute__((__format__(__printf__,1,2)));
+static void say(const char *fmt, ...)
 {
-	static bp_getfile_res res;
-	struct hostent *he;
-	int     err;
+ va_list ap;
+ char *s;
 
-	if (debug)
-		warnx("getfile got question for \"%s\" and file \"%s\"",
-		    getfile->client_name, getfile->file_id);
-
-	if (dolog)
-		syslog(LOG_NOTICE,
-		    "getfile got question for \"%s\" and file \"%s\"",
-		    getfile->client_name, getfile->file_id);
-
-	he = NULL;
-	he = gethostbyname(getfile->client_name);
-	if (!he) {
-		if (debug)
-			warnx("getfile can't resolve client %s",
-			    getfile->client_name);
-		if (dolog)
-			syslog(LOG_NOTICE, "getfile can't resolve client %s",
-			    getfile->client_name);
-		return (NULL);
-	}
-
-	(void)strlcpy(askname, he->h_name, sizeof(askname));
-	err = lookup_bootparam(askname, NULL, getfile->file_id,
-	    &res.server_name, &res.server_path);
-	if (err == 0) {
-		he = gethostbyname(res.server_name);
-		if (!he) {
-			if (debug)
-				warnx("getfile can't resolve server %s for %s",
-			    res.server_name, getfile->client_name);
-		if (dolog)
-			syslog(LOG_NOTICE,
-			    "getfile can't resolve server %s for %s",
-			    res.server_name, getfile->client_name);
-		return (NULL);
-
-		}
-		memmove(&res.server_address.bp_address_u.ip_addr,
-		    he->h_addr, 4);
-		res.server_address.address_type = IP_ADDR_TYPE;
-	} else if (err == ENOENT && !strcmp(getfile->file_id, "dump")) {
-		/* Special for dump, answer with null strings. */
-		res.server_name[0] = '\0';
-		res.server_path[0] = '\0';
-		memset(&res.server_address.bp_address_u.ip_addr, 0, 4);
-	} else {
-		if (debug)
-			warnx("getfile lookup failed for %s",
-			    getfile->client_name);
-		if (dolog)
-			syslog(LOG_NOTICE,
-			    "getfile lookup failed for %s",
-			    getfile->client_name);
-		return (NULL);
-	}
-
-	if (debug)
-		warnx(
-		    "returning server:%s path:%s address: %d.%d.%d.%d",
-		    res.server_name, res.server_path,
-		    255 & res.server_address.bp_address_u.ip_addr.net,
-		    255 & res.server_address.bp_address_u.ip_addr.host,
-		    255 & res.server_address.bp_address_u.ip_addr.lh,
-		    255 & res.server_address.bp_address_u.ip_addr.impno);
-	if (dolog)
-		syslog(LOG_NOTICE,
-		    "returning server:%s path:%s address: %d.%d.%d.%d",
-		    res.server_name, res.server_path,
-		    255 & res.server_address.bp_address_u.ip_addr.net,
-		    255 & res.server_address.bp_address_u.ip_addr.host,
-		    255 & res.server_address.bp_address_u.ip_addr.lh,
-		    255 & res.server_address.bp_address_u.ip_addr.impno);
-	return (&res);
+ if (debug || dolog)
+  { va_start(ap,fmt);
+    vasprintf(&s,fmt,ap);
+    va_end(ap);
+    if (debug) warnx("%s",s);
+    if (dolog) syslog(LOG_NOTICE,"%s",s);
+    free(s);
+  }
 }
 
+bp_getfile_res *bootparamproc_getfile_1_svc(bp_getfile_arg *getfile, struct svc_req *rqstp)
+{
+ static bp_getfile_res res;
+ struct hostent *he;
+ int err;
+
+ say( "getfile got question for \"%s\" and file \"%s\"",
+	getfile->client_name, getfile->file_id );
+ strlcpy(&askname[0],getfile->client_name,sizeof(askname));
+ err = lookup_bootparam( &askname[0], 0, getfile->file_id,
+	 		 &res.server_name, &res.server_path );
+ if (err == ENOENT)
+  { he = gethostbyname(getfile->client_name);
+    if (he)
+     { strlcpy(&askname[0],he->h_name,sizeof(askname));
+       err = lookup_bootparam( &askname[0], 0, getfile->file_id,
+			       &res.server_name, &res.server_path );
+     }
+  }
+ switch (err)
+  { case 0:
+       he = gethostbyname(res.server_name);
+       if (! he)
+	{ say( "getfile can't resolve server %s for %s",
+	       res.server_name, getfile->client_name );
+	  return(0);
+	}
+       if (he->h_addrtype != AF_INET)
+	{ say( "server %s for %s resolves to non-v4 address",
+	       res.server_name, getfile->client_name );
+	  return(0);
+	}
+       res.server_address.address_type = IP_ADDR_TYPE;
+       /*
+	* This is gross, ignoring the structure of ip_addr, but it's
+	*  how this has historically been done.
+	*
+	* I'm not sure whether I think it's better to use that
+	*  structure or eliminiate it (depends in part on exactly how
+	*  the protocol is defined), but one or the other really ought
+	*  to be done.
+	*/
+       bcopy(he->h_addr,&res.server_address.bp_address_u.ip_addr,4);
+       break;
+    case ENOENT:
+       if (! strcmp(getfile->file_id,"dump"))
+	{ /*
+	   * Special case: "not found" for dump turns into zero-length
+	   *  strings, rather than an error.
+	   */
+	  res.server_name[0] = '\0';
+	  res.server_path[0] = '\0';
+	  /* See above about ignoring the structure of ip_addr. */
+	  bzero(&res.server_address.bp_address_u.ip_addr,4);
+	  break;
+	}
+       /* fall through */
+    default:
+       say("getfile lookup failed for %s",getfile->client_name);
+       return(0);
+       break;
+  }
+ /*
+  * ...and now we _use_ the structure of ip_addr.  Uuuuuugh.
+  */
+ say( "returning server:%s path:%s address: %d.%d.%d.%d",
+      res.server_name, res.server_path,
+      res.server_address.bp_address_u.ip_addr.net & 0xff,
+      res.server_address.bp_address_u.ip_addr.host & 0xff,
+      res.server_address.bp_address_u.ip_addr.lh & 0xff,
+      res.server_address.bp_address_u.ip_addr.impno & 0xff );
+ return(&res);
+}
 
 int
 lookup_bootparam(client, client_canonical, id, server, path)
@@ -377,7 +383,12 @@ lookup_bootparam(client, client_canonical, id, server, path)
 
 			/* See if this line's client is the one we are
 			 * looking for */
-			if (fnmatch(word, client, FNM_CASEFOLD) == 0) {
+			if ( ((canon = index(word,':'))) &&
+			     ( (*canon++ = '\0'),
+			       ( !strcasecmp(client,word) ||
+				 !strcasecmp(client,canon) ) ) ) {
+				/* canon already set */
+			} else if (fnmatch(word, client, FNM_CASEFOLD) == 0) {
 				/*
 				 * Match.  The token may be globbed, we
 				 * can't just return that as the canonical

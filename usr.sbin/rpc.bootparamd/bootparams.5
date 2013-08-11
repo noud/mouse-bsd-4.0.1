@@ -88,6 +88,17 @@ as the response to its
 .Tn RPC
 request.  As this example implies, this is useful for setting up
 Jumpstart servers for Sun clients.
+.Pp
+.Bd -literal -offset indent
+192.168.4.17:small	root=server:/nfs/small
+.Ed
+.Pp
+The client with address 192.168.4.17 will be given the name
+.Dq small ,
+host
+.Dq server ,
+and path
+.Dq Pa /nfs/small .
 .Sh NOTES
 The server does not default to the localhost, and must be filled in.
 .Sh FILES
