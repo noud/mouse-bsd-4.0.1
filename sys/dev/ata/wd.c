@@ -417,12 +417,12 @@ static int hpa_check(struct device *self)
      }
     else
      { if (wd_get_params(wd,AT_WAIT,&wd->sc_params) != 0)
-	{ aprint_error("%s: IDENTIFY reload failed\n",wd->sc_dev.dv_xname);
+	{ aprint_error("%s: IDENTIFY reload failed\n",&self->dv_xname[0]);
 	  return(1);
 	}
        wd->sc_capacity = wd_capacity_from_params(wd);
        if (wd->sc_capacity != maxcap)
-	{ aprint_error("%s: WARNING: %s didn't work right (wanted %llu, got %llu)\n",&wd->sc_dev.dv_xname[0],cmdname,maxcap,wd->sc_capacity);
+	{ aprint_error("%s: WARNING: %s didn't work right (wanted %llu, got %llu)\n",&self->dv_xname[0],cmdname,maxcap,wd->sc_capacity);
 	}
        else
 	{ aprint_normal("%s: effective capacity raised from %llu to %llu\n",&self->dv_xname[0],curcap,wd->sc_capacity);
