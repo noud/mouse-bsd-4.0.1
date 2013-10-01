@@ -297,7 +297,10 @@ writefile(time_t runtimer, unsigned char queue)
 		if (fpin == NULL)
 			perr("Cannot open input file");
 	}
-	(void)fprintf(fp, "#!/bin/sh\n# atrun uid=%u gid=%u\n# mail %s %d\n",
+	(void)fprintf(fp,
+			"#!/bin/sh\n"
+			"# atrun uid=%u gid=%u\n"
+			"# mail %s %d\n",
 	    real_uid, real_gid, mailname, send_mail);
 
 	/* Write out the umask at the time of invocation */
