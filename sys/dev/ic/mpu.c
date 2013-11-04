@@ -254,7 +254,7 @@ mpu_getinfo(addr, mi)
 	struct mpu_softc *sc = addr;
 
 	mi->name = sc->model;
-	mi->props = 0;
+	mi->props = MIDI_PROP_CAN_INPUT;
 }
 
 int
