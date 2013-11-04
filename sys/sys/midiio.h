@@ -45,6 +45,8 @@
  * the binary level.
  */
 
+#include <sys/types.h>
+
 #include <machine/endian_machdep.h>
 
 /*
