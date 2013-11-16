@@ -269,7 +269,9 @@ WRITE(void *v)
 	    uio->uio_offset + uio->uio_resid >
 	    l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
 		psignal(l->l_proc, SIGXFSZ);
-		return (EFBIG);
+		if (uio->uio_offset + uio->uio_resid >
+		    l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_max)
+			return (EFBIG);
 	}
 	if (uio->uio_resid == 0)
 		return (0);

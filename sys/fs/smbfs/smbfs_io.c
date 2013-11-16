@@ -278,7 +278,8 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 		return 0;
 	if (p && uiop->uio_offset + uiop->uio_resid > p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
 		psignal(p, SIGXFSZ);
-		return EFBIG;
+		if (uiop->uio_offset + uiop->uio_resid > p->p_rlimit[RLIMIT_FSIZE].rlim_max)
+			return EFBIG;
 	}
 	smb_makescred(&scred, l, cred);
 	error = smb_write(smp->sm_share, np->n_fid, uiop, &scred);

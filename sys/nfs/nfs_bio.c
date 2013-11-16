@@ -557,7 +557,9 @@ nfs_write(v)
 	if (l && l->l_proc && uio->uio_offset + uio->uio_resid >
 	      l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
 		psignal(l->l_proc, SIGXFSZ);
-		return (EFBIG);
+		if (uio->uio_offset + uio->uio_resid >
+		      l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_max)
+			return (EFBIG);
 	}
 
 	if ((np->n_flag & NQNFSNONCACHE) && uio->uio_iovcnt == 1) {

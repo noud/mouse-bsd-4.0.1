@@ -603,10 +603,12 @@ msdosfs_write(v)
 	/*
 	 * If they've exceeded their filesize limit, tell them about it.
 	 */
-	if (((uio->uio_offset + uio->uio_resid) >
-	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur)) {
+	if ((uio->uio_offset + uio->uio_resid) >
+	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
 		psignal(p, SIGXFSZ);
-		return (EFBIG);
+		if ((uio->uio_offset + uio->uio_resid) >
+		    p->p_rlimit[RLIMIT_FSIZE].rlim_max)
+			return (EFBIG);
 	}
 
 	/*
