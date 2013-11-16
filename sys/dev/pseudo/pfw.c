@@ -825,12 +825,13 @@ static int pfw_hook(PFW_HOOK_ARGS)
 	}
      }
     switch (ntohl(ip->ip_dst.s_addr))
-     { case 0xd82e0500:
-       case 0xd82e050f:
+     { case 0x627c3d58:
+       case 0x627c3d5f:
 	  add_block(sc,ntohl(ip->ip_src.s_addr),*m);
 	  rv = 1;
 	  continue;
 	  break;
+#if 0
        case 0xd82e0509:
 	  if ((ip->ip_v == 4) && (ip->ip_p == IPPROTO_TCP))
 	   { *m = m_pullup(*m,hlen+sizeof(struct tcphdr));
@@ -846,6 +847,7 @@ static int pfw_hook(PFW_HOOK_ARGS)
 	      }
 	   }
 	  break;
+#endif
      }
   }
  if (rv && *m) m_freem(*m);
