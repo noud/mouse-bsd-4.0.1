@@ -787,41 +787,44 @@ static int pfw_hook(PFW_HOOK_ARGS)
        continue;
      }
     if (ip->ip_v == 4)
-     { switch (ip->ip_p)
-	{ case IPPROTO_TCP:
-	     *m = m_pullup(*m,hlen+sizeof(struct tcphdr));
-	     if (! *m)
-	      { rv = 1;
-		continue;
-	      }
-	     th = (struct tcphdr *) (mtod(*m,char *) + hlen);
-	     switch (ntohs(th->th_dport))
-	      { case 137:
-		case 138:
-		case 139:
-		   add_block(sc,ntohl(ip->ip_src.s_addr),*m);
-		   rv = 1;
+     { if ((ip->ip_off & IP_OFFMASK) == 0)
+	{ switch (ip->ip_p)
+	   { case IPPROTO_TCP:
+		*m = m_pullup(*m,hlen+sizeof(struct tcphdr));
+		if (! *m)
+		 { rv = 1;
 		   continue;
-		   break;
-	      }
-	     break;
-	  case IPPROTO_UDP:
-	     *m = m_pullup(*m,hlen+sizeof(struct udphdr));
-	     if (! *m)
-	      { rv = 1;
-		continue;
-	      }
-	     uh = (struct udphdr *) (mtod(*m,char *) + hlen);
-	     switch (ntohs(uh->uh_dport))
-	      { case 137:
-		case 138:
-		case 139:
-		   add_block(sc,ntohl(ip->ip_src.s_addr),*m);
-		   rv = 1;
+		 }
+		th = (struct tcphdr *) (mtod(*m,char *) + hlen);
+		switch (ntohs(th->th_dport))
+		 { case 137: /* netbios-ns */
+		   case 138: /* netbios-dgm */
+		   case 139: /* netbios-ssn */
+		   case 445: /* microsoft-ds */
+		      add_block(sc,ntohl(ip->ip_src.s_addr),*m);
+		      rv = 1;
+		      continue;
+		      break;
+		 }
+		break;
+	     case IPPROTO_UDP:
+		*m = m_pullup(*m,hlen+sizeof(struct udphdr));
+		if (! *m)
+		 { rv = 1;
 		   continue;
-		   break;
-	      }
-	     break;
+		 }
+		uh = (struct udphdr *) (mtod(*m,char *) + hlen);
+		switch (ntohs(uh->uh_dport))
+		 { case 137:
+		   case 138:
+		   case 139:
+		      add_block(sc,ntohl(ip->ip_src.s_addr),*m);
+		      rv = 1;
+		      continue;
+		      break;
+		 }
+		break;
+	   }
 	}
      }
     switch (ntohl(ip->ip_dst.s_addr))
