@@ -33,6 +33,8 @@
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.29 2005/12/11 12:20:53 christos Exp $");
 
+#include "opt_ddbparam.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 
@@ -156,7 +158,9 @@ db_putchar(int c)
 		if (db_max_width >= DB_MIN_MAX_WIDTH
 		    && db_output_position >= db_max_width) {
 			/* auto new line */
+#ifndef DDB_NO_WRAP_NL
 			cnputc('\n');
+#endif
 			db_output_position = 0;
 			db_last_non_space = 0;
 			db_output_line++;
