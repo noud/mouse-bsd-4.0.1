@@ -835,31 +835,31 @@ static int pfw_hook(PFW_HOOK_ARGS)
 		break;
 	   }
 	}
-     }
-    switch (ntohl(ip->ip_dst.s_addr))
-     { case 0x627c3d58:
-       case 0x627c3d5f:
-	  add_block(sc,ntohl(ip->ip_src.s_addr),*m);
-	  rv = 1;
-	  continue;
-	  break;
+       switch (ntohl(ip->ip_dst.s_addr))
+	{ case 0x627c3d58:
+	  case 0x627c3d5f:
+	     add_block(sc,ntohl(ip->ip_src.s_addr),*m);
+	     rv = 1;
+	     continue;
+	     break;
 #if 0
-       case 0xd82e0509:
-	  if ((ip->ip_v == 4) && (ip->ip_p == IPPROTO_TCP))
-	   { *m = m_pullup(*m,hlen+sizeof(struct tcphdr));
-	     if (! *m)
-	      { rv = 1;
-		continue;
+	  case 0xd82e0509:
+	     if (ip->ip_p == IPPROTO_TCP)
+	      { *m = m_pullup(*m,hlen+sizeof(struct tcphdr));
+		if (! *m)
+		 { rv = 1;
+		   continue;
+		 }
+		th = (struct tcphdr *) (mtod(*m,char *) + hlen);
+		if (ntohs(th->th_dport) == 25)
+		 { add_block(sc,ntohl(ip->ip_src.s_addr),*m);
+		   rv = 1;
+		   continue;
+		 }
 	      }
-	     th = (struct tcphdr *) (mtod(*m,char *) + hlen);
-	     if (ntohs(th->th_dport) == 25)
-	      { add_block(sc,ntohl(ip->ip_src.s_addr),*m);
-		rv = 1;
-		continue;
-	      }
-	   }
-	  break;
+	     break;
 #endif
+	}
      }
   }
  if (rv && *m) m_freem(*m);
