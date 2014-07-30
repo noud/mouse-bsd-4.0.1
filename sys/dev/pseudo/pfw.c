@@ -32,6 +32,15 @@ typedef struct watch WATCH;
 #define PFWUNIT(m) ((m) >> 4)
 #define PFWKIND(m) ((m) & 15)
 
+#define PFWKIND_IFACE  0
+#define PFWKIND_CLEAR  1
+#define PFWKIND_SERIAL 2
+#define PFWKIND_COUNT  3
+#define PFWKIND_LIST   4
+#define PFWKIND_WATCH  5
+#define PFWKIND_ADD    6
+#define PFWKIND_DEL    7
+
 struct softc {
   int unit;
   struct ifnet *fifp;
@@ -923,7 +932,7 @@ DEVSW_SCLASS int pfwread(dev_t dev, struct uio *uio, int ioflag)
  sc = &pfw_softc[unit];
  if (uio->uio_offset < 0) return(EINVAL);
  switch (kind)
-  { case 0:
+  { case PFWKIND_IFACE:
        if (sc->fifp)
 	{ d = &sc->fifp->if_xname[0];
 	  l = strlen(d);
@@ -934,24 +943,24 @@ DEVSW_SCLASS int pfwread(dev_t dev, struct uio *uio, int ioflag)
 	  l = 1;
 	}
        break;
-    case 1:
+    case PFWKIND_CLEAR:
        return(0);
        break;
-    case 2:
+    case PFWKIND_SERIAL:
        s = splnet();
        val_ulli = serial;
        splx(s);
        d = (void *) &val_ulli;
        l = sizeof(val_ulli);
        break;
-    case 3:
+    case PFWKIND_COUNT:
        s = splnet();
        val_ui = sc->nftn;
        splx(s);
        d = (void *) &val_ui;
        l = sizeof(val_ui);
        break;
-    case 4:
+    case PFWKIND_LIST:
        while (uio->uio_resid)
 	{ o = uio->uio_offset / 4;
 	  owi = uio->uio_offset % 4;
@@ -1054,7 +1063,7 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
  if (unit >= NPFW) return(ENXIO);
  sc = &pfw_softc[unit];
  switch (kind)
-  { case 0:
+  { case PFWKIND_IFACE:
 	{ char xnbuf[64];
 	  int l;
 	  struct ifnet *i;
@@ -1075,11 +1084,11 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 	  reset_maxlive();
 	}
        break;
-    case 1:
+    case PFWKIND_CLEAR:
        uio->uio_resid = 0;
        ftn_clear(sc);
        break;
-    case 5:
+    case PFWKIND_WATCH:
 	{ int fd;
 	  switch (uio->uio_resid)
 	   { case 1:
@@ -1099,7 +1108,7 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 	  return(addwatch(sc,fd));
 	}
        break;
-    case 6:
+    case PFWKIND_ADD:
 	{ unsigned char a[4];
 	  u_int32_t v;
 	  FTN *f;
@@ -1119,7 +1128,7 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 	  splx(s);
 	}
        break;
-    case 7:
+    case PFWKIND_DEL:
 	{ unsigned char a[4];
 	  if (uio->uio_resid != 4) return(EINVAL);
 	  e = uiomove(&a[0],4,uio);
