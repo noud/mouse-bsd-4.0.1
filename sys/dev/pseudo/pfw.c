@@ -943,9 +943,6 @@ DEVSW_SCLASS int pfwread(dev_t dev, struct uio *uio, int ioflag)
 	  l = 1;
 	}
        break;
-    case PFWKIND_CLEAR:
-       return(0);
-       break;
     case PFWKIND_SERIAL:
        s = splnet();
        val_ulli = serial;
