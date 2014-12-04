@@ -108,6 +108,7 @@
 #define BRDGSIFCOST		22	/* set if path cost (ifbreq) */
 #define BRDGGFILT	        23	/* get filter flags (ifbrparam) */
 #define BRDGSFILT	        24	/* set filter flags (ifbrparam) */
+#define BRDGSDEBUG		25	/* set if path cost (int) */
 
 /*
  * Generic bridge control request.

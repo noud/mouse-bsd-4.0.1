@@ -95,6 +95,7 @@ void	cmd_ifpathcost(const struct command *, int, const char *, char **);
 void	cmd_timeout(const struct command *, int, const char *, char **);
 void	cmd_stp(const struct command *, int, const char *, char **);
 void	cmd_ipf(const struct command *, int, const char *, char **);
+void	cmd_debug(const struct command *, int, const char *, char **);
 
 const struct command command_table[] = {
 	{ "add",		1,	0,		cmd_add },
@@ -130,6 +131,8 @@ const struct command command_table[] = {
 
         { "ipf",                0,      0,              cmd_ipf },
         { "-ipf",               0,      CMD_INVERT,     cmd_ipf },
+
+        { "debug",              1,      0,              cmd_debug },
 
 	{ NULL,			0,	0,		NULL },
 };
@@ -265,6 +268,7 @@ usage(void)
 		"<bridge> priority <value>",
 		"<bridge> ifpriority <interface> <value>",
 		"<bridge> ifpathcost <interface> <value>",
+		"<bridge> debug <value>",
 		NULL,
 	};
 	extern const char *__progname;
@@ -844,4 +848,18 @@ cmd_ipf(const struct command *cmd, int sock, const char *bridge,
         param.ifbrp_filter |= (cmd->cmd_flags & CMD_INVERT) ? 0 : IFBF_FILT_USEIPF;
         if (do_cmd(sock, bridge, BRDGSFILT, &param, sizeof(param), 1) < 0)
 		err(1, "%s %x", cmd->cmd_keyword, param.ifbrp_filter);
+}
+
+void cmd_debug(const struct command *cmd, int sock, const char *bridge, char **argv)
+{
+ u_long dbgul;
+ int dbg;
+
+ if ( (get_val(argv[0],&dbgul) < 0) ||
+      (dbg=dbgul, dbg!=dbgul) )
+  { errx(1,"%s: invalid value: %s",cmd->cmd_keyword,argv[0]);
+  }
+ if (do_cmd(sock,bridge,BRDGSDEBUG,&dbg,sizeof(int),1) < 0)
+  { err(1,"%s: %s",cmd->cmd_keyword,argv[0]);
+  }
 }

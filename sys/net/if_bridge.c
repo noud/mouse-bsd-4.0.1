@@ -172,6 +172,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.46 2006/11/23 04:07:07 rpaulo Exp $"
 int	bridge_rtable_prune_period = BRIDGE_RTABLE_PRUNE_PERIOD;
 
 static struct pool bridge_rtnode_pool;
+static int bridge_debug;
 
 void	bridgeattach(int);
 
@@ -248,6 +249,7 @@ static int	bridge_ip_checkbasic(struct mbuf **mp);
 static int	bridge_ip6_checkbasic(struct mbuf **mp);
 # endif /* INET6 */
 #endif /* BRIDGE_IPF && PFIL_HOOKS */
+static int	bridge_ioctl_sdebug(struct bridge_softc *, void *);
 
 struct bridge_control {
 	int	(*bc_func)(struct bridge_softc *, void *);
@@ -260,70 +262,59 @@ struct bridge_control {
 #define	BC_F_SUSER		0x04	/* do super-user check */
 
 static const struct bridge_control bridge_control_table[] = {
-	{ bridge_ioctl_add,		sizeof(struct ifbreq),
-	  BC_F_COPYIN|BC_F_SUSER },
-	{ bridge_ioctl_del,		sizeof(struct ifbreq),
-	  BC_F_COPYIN|BC_F_SUSER },
-
-	{ bridge_ioctl_gifflags,	sizeof(struct ifbreq),
-	  BC_F_COPYIN|BC_F_COPYOUT },
-	{ bridge_ioctl_sifflags,	sizeof(struct ifbreq),
-	  BC_F_COPYIN|BC_F_SUSER },
-
-	{ bridge_ioctl_scache,		sizeof(struct ifbrparam),
-	  BC_F_COPYIN|BC_F_SUSER },
-	{ bridge_ioctl_gcache,		sizeof(struct ifbrparam),
-	  BC_F_COPYOUT },
-
-	{ bridge_ioctl_gifs,		sizeof(struct ifbifconf),
-	  BC_F_COPYIN|BC_F_COPYOUT },
-	{ bridge_ioctl_rts,		sizeof(struct ifbaconf),
-	  BC_F_COPYIN|BC_F_COPYOUT },
-
-	{ bridge_ioctl_saddr,		sizeof(struct ifbareq),
-	  BC_F_COPYIN|BC_F_SUSER },
-
-	{ bridge_ioctl_sto,		sizeof(struct ifbrparam),
-	  BC_F_COPYIN|BC_F_SUSER },
-	{ bridge_ioctl_gto,		sizeof(struct ifbrparam),
-	  BC_F_COPYOUT },
-
-	{ bridge_ioctl_daddr,		sizeof(struct ifbareq),
-	  BC_F_COPYIN|BC_F_SUSER },
-
-	{ bridge_ioctl_flush,		sizeof(struct ifbreq),
-	  BC_F_COPYIN|BC_F_SUSER },
-
-	{ bridge_ioctl_gpri,		sizeof(struct ifbrparam),
-	  BC_F_COPYOUT },
-	{ bridge_ioctl_spri,		sizeof(struct ifbrparam),
-	  BC_F_COPYIN|BC_F_SUSER },
-
-	{ bridge_ioctl_ght,		sizeof(struct ifbrparam),
-	  BC_F_COPYOUT },
-	{ bridge_ioctl_sht,		sizeof(struct ifbrparam),
-	  BC_F_COPYIN|BC_F_SUSER },
-
-	{ bridge_ioctl_gfd,		sizeof(struct ifbrparam),
-	  BC_F_COPYOUT },
-	{ bridge_ioctl_sfd,		sizeof(struct ifbrparam),
-	  BC_F_COPYIN|BC_F_SUSER },
-
-	{ bridge_ioctl_gma,		sizeof(struct ifbrparam),
-	  BC_F_COPYOUT },
-	{ bridge_ioctl_sma,		sizeof(struct ifbrparam),
-	  BC_F_COPYIN|BC_F_SUSER },
-
-	{ bridge_ioctl_sifprio,		sizeof(struct ifbreq),
-	  BC_F_COPYIN|BC_F_SUSER },
-
-	{ bridge_ioctl_sifcost,		sizeof(struct ifbreq),
-	  BC_F_COPYIN|BC_F_SUSER },
+	[BRDGADD]     = { bridge_ioctl_add, sizeof(struct ifbreq),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGDEL]     = { bridge_ioctl_del, sizeof(struct ifbreq),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGGIFFLGS] = { bridge_ioctl_gifflags, sizeof(struct ifbreq),
+			BC_F_COPYIN|BC_F_COPYOUT },
+	[BRDGSIFFLGS] = { bridge_ioctl_sifflags, sizeof(struct ifbreq),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGSCACHE]  = { bridge_ioctl_scache, sizeof(struct ifbrparam),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGGCACHE]  = { bridge_ioctl_gcache, sizeof(struct ifbrparam),
+			BC_F_COPYOUT },
+	[BRDGGIFS]    = { bridge_ioctl_gifs, sizeof(struct ifbifconf),
+			BC_F_COPYIN|BC_F_COPYOUT },
+	[BRDGRTS]     = { bridge_ioctl_rts, sizeof(struct ifbaconf),
+			BC_F_COPYIN|BC_F_COPYOUT },
+	[BRDGSADDR]   = { bridge_ioctl_saddr, sizeof(struct ifbareq),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGSTO]     = { bridge_ioctl_sto, sizeof(struct ifbrparam),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGGTO]     = { bridge_ioctl_gto, sizeof(struct ifbrparam),
+			BC_F_COPYOUT },
+	[BRDGDADDR]   = { bridge_ioctl_daddr, sizeof(struct ifbareq),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGFLUSH]   = { bridge_ioctl_flush, sizeof(struct ifbreq),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGGPRI]    = { bridge_ioctl_gpri, sizeof(struct ifbrparam),
+			BC_F_COPYOUT },
+	[BRDGSPRI]    = { bridge_ioctl_spri, sizeof(struct ifbrparam),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGGHT]     = { bridge_ioctl_ght, sizeof(struct ifbrparam),
+			BC_F_COPYOUT },
+	[BRDGSHT]     = { bridge_ioctl_sht, sizeof(struct ifbrparam),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGGFD]     = { bridge_ioctl_gfd, sizeof(struct ifbrparam),
+			BC_F_COPYOUT },
+	[BRDGSFD]     = { bridge_ioctl_sfd, sizeof(struct ifbrparam),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGGMA]     = { bridge_ioctl_gma, sizeof(struct ifbrparam),
+			BC_F_COPYOUT },
+	[BRDGSMA]     = { bridge_ioctl_sma, sizeof(struct ifbrparam),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGSIFPRIO] = { bridge_ioctl_sifprio, sizeof(struct ifbreq),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGSIFCOST] = { bridge_ioctl_sifcost, sizeof(struct ifbreq),
+			BC_F_COPYIN|BC_F_SUSER },
+	[BRDGSDEBUG]  = { bridge_ioctl_sdebug, sizeof(int),
+			BC_F_COPYIN|BC_F_SUSER },
 #if defined(BRIDGE_IPF) && defined(PFIL_HOOKS)
-	{ bridge_ioctl_gfilt,		sizeof(struct ifbrparam),
-	  BC_F_COPYOUT },
-	{ bridge_ioctl_sfilt,		sizeof(struct ifbrparam),
-	  BC_F_COPYIN|BC_F_SUSER },
+	[BRDGGFILT]   = { bridge_ioctl_gfilt, sizeof(struct ifbrparam),
+			BC_F_COPYOUT },
+	[BRDGSFILT]   = { bridge_ioctl_sfilt, sizeof(struct ifbrparam),
+			BC_F_COPYIN|BC_F_SUSER },
 #endif /* BRIDGE_IPF && PFIL_HOOKS */
 };
 static const int bridge_control_table_size =
@@ -472,6 +463,10 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		bc = &bridge_control_table[ifd->ifd_cmd];
+		if (! bc->bc_func) {
+			error = EINVAL;
+			break;
+		}
 
 		if (cmd == SIOCGDRVSPEC &&
 		    (bc->bc_flags & BC_F_COPYOUT) == 0) {
@@ -1060,6 +1055,12 @@ bridge_ioctl_sifcost(struct bridge_softc *sc, void *arg)
 		bstp_initialization(sc);
 
 	return (0);
+}
+
+static int bridge_ioctl_sdebug(struct bridge_softc *sc, void *arg)
+{
+ bridge_debug = *(int *)arg;
+ return(0);
 }
 
 /*
