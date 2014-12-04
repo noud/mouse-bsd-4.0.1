@@ -1140,6 +1140,7 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	int len, error;
 	short mflags;
 
+ if (bridge_debug) printf("bridge_enqueue: called on %s\n",&dst_ifp->if_xname[0]);
 	/*
 	 * Clear any in-bound checksum flags for this packet.
 	 */
@@ -1151,10 +1152,13 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 		    dst_ifp, PFIL_OUT) != 0) {
 			if (m != NULL)
 				m_freem(m);
+					       if (bridge_debug) printf("bridge_enqueue: pfil_run_hooks ate packet\n");
 			return;
 		}
 		if (m == NULL)
+			{ if (bridge_debug) printf("bridge_enqueue: pfil_run_hooks dropped packet\n");
 			return;
+			}
 	}
 #endif /* PFIL_HOOKS */
 
@@ -1178,6 +1182,7 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	if (error) {
 		/* mbuf is already freed */
 		sc->sc_if.if_oerrors++;
+		     if (bridge_debug) printf("bridge_enqueue: IF_ENQUEUE failed\n");
 		return;
 	}
 
@@ -1192,7 +1197,9 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	}
 
 	if ((dst_ifp->if_flags & IFF_OACTIVE) == 0)
+  { if (bridge_debug) printf("bridge_enqueue: OACTIVE clear, calling start\n");
 		(*dst_ifp->if_start)(dst_ifp);
+  } else if (bridge_debug) printf("bridge_enqueue: OACTIVE set\n");
 }
 
 /*
@@ -1332,6 +1339,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	struct ether_header *eh;
 
 	src_if = m->m_pkthdr.rcvif;
+ if (bridge_debug) printf("bridge_forward: from %s\n",&src_if->if_xname[0]);
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
@@ -1341,6 +1349,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	 */
 	bif = bridge_lookup_member_if(sc, src_if);
 	if (bif == NULL) {
+			   if (bridge_debug) printf("bridge_forward: not a bridge member\n");
 		/* Interface is not a bridge member (anymore?) */
 		m_freem(m);
 		return;
@@ -1351,6 +1360,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		case BSTP_IFSTATE_BLOCKING:
 		case BSTP_IFSTATE_LISTENING:
 		case BSTP_IFSTATE_DISABLED:
+					  if (bridge_debug) printf("bridge_forward: STP-disabled\n");
 			m_freem(m);
 			return;
 		}
@@ -1373,12 +1383,16 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	     eh->ether_shost[3] == 0 &&
 	     eh->ether_shost[4] == 0 &&
 	     eh->ether_shost[5] == 0) == 0) {
+					      if (bridge_debug) printf("bridge_forward: learning source %02x:%02x:%02x:%02x:%02x:%02x\n",
+							eh->ether_shost[0], eh->ether_shost[1], eh->ether_shost[2],
+							eh->ether_shost[3], eh->ether_shost[4], eh->ether_shost[5] );
 		(void) bridge_rtupdate(sc, eh->ether_shost,
 		    src_if, 0, IFBAF_DYNAMIC);
 	}
 
 	if ((bif->bif_flags & IFBIF_STP) != 0 &&
 	    bif->bif_state == BSTP_IFSTATE_LEARNING) {
+						       if (bridge_debug) printf("bridge_forward: STP learning\n");
 		m_freem(m);
 		return;
 	}
@@ -1395,10 +1409,12 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0) {
 		dst_if = bridge_rtlookup(sc, eh->ether_dhost);
 		if (src_if == dst_if) {
+					if (bridge_debug) printf("bridge_forward: unicast back out source port\n");
 			m_freem(m);
 			return;
 		}
 	} else {
+		 if (bridge_debug) printf("bridge_forward: multicast flood\n");
 		/* ...forward it to all interfaces. */
 		sc->sc_if.if_imcasts++;
 		dst_if = NULL;
@@ -1407,15 +1423,19 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 #ifdef PFIL_HOOKS
 	if (pfil_run_hooks(&sc->sc_if.if_pfil, &m,
 	    m->m_pkthdr.rcvif, PFIL_IN) != 0) {
+						if (bridge_debug) printf("bridge_forward: pfil_run_hooks rejects\n");
 		if (m != NULL)
 			m_freem(m);
 		return;
 	}
 	if (m == NULL)
+  { if (bridge_debug) printf("bridge_forward: pfil_run_hooks lost packet\n");
 		return;
+  }
 #endif /* PFIL_HOOKS */
 
 	if (dst_if == NULL) {
+			      if (bridge_debug) printf("bridge_forward: flooding\n");
 		bridge_broadcast(sc, src_if, m);
 		return;
 	}
@@ -1424,12 +1444,15 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	 * At this point, we're dealing with a unicast frame
 	 * going to a different interface.
 	 */
+ if (bridge_debug) printf("bridge_forward: dst is %s\n",&dst_if->if_xname[0]);
 	if ((dst_if->if_flags & IFF_RUNNING) == 0) {
+						     if (bridge_debug) printf("bridge_forward: dst !RUNNING\n");
 		m_freem(m);
 		return;
 	}
 	bif = bridge_lookup_member_if(sc, dst_if);
 	if (bif == NULL) {
+			   if (bridge_debug) printf("bridge_forward: dst not a bridge member\n");
 		/* Not a member of the bridge (anymore?) */
 		m_freem(m);
 		return;
@@ -1439,11 +1462,13 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		switch (bif->bif_state) {
 		case BSTP_IFSTATE_DISABLED:
 		case BSTP_IFSTATE_BLOCKING:
+					  if (bridge_debug) printf("bridge_forward: dst STP-disabled\n");
 			m_freem(m);
 			return;
 		}
 	}
 
+ if (bridge_debug) printf("bridge_forward: enqueueing\n");
 	bridge_enqueue(sc, dst_if, m, 1);
 }
 
@@ -1461,12 +1486,21 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	struct ether_header *eh;
 	struct mbuf *mc;
 
+ if (bridge_debug) bridge_debug --;
+ if (bridge_debug)
+  { printf("bridge_input: %s, from %s\n",&sc->sc_if.if_xname[0],&ifp->if_xname[0]);
+  }
+
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
+  { if (bridge_debug) printf("! RUNNING\n");
 		return (m);
+  }
 
 	bif = bridge_lookup_member_if(sc, ifp);
 	if (bif == NULL)
+  { if (bridge_debug) printf("member not found\n");
 		return (m);
+  }
 
 	eh = mtod(m, struct ether_header *);
 
@@ -1474,6 +1508,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		/* Tap off 802.1D packets; they do not get forwarded. */
 		if (memcmp(eh->ether_dhost, bstp_etheraddr,
 		    ETHER_ADDR_LEN) == 0) {
+					    if (bridge_debug) printf("802.1D (spanning tree)\n");
 			m = bstp_input(ifp, m);
 			if (m == NULL)
 				return (NULL);
@@ -1484,6 +1519,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			case BSTP_IFSTATE_BLOCKING:
 			case BSTP_IFSTATE_LISTENING:
 			case BSTP_IFSTATE_DISABLED:
+						  if (bridge_debug) printf("this port STP-disabled (multicast)\n");
 				return (m);
 			}
 		}
@@ -1495,7 +1531,9 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		 */
 		mc = m_dup(m, 0, M_COPYALL, M_NOWAIT);
 		if (mc == NULL)
+					       { if (bridge_debug) printf("m_dup failed\n");
 			return (m);
+					       }
 
 		/* Perform the bridge forwarding function with the copy. */
 		bridge_forward(sc, mc);
@@ -1509,6 +1547,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		case BSTP_IFSTATE_BLOCKING:
 		case BSTP_IFSTATE_LISTENING:
 		case BSTP_IFSTATE_DISABLED:
+					  if (bridge_debug) printf("this port STP-disabled (unicast)\n");
 			return (m);
 		}
 	}
@@ -1525,6 +1564,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			eh, IFT_ETHER, 0) != NULL)
 #endif /* NCARP > 0 */
 		    ) {
+			if (bridge_debug) printf("actually for %s\n",&bif->bif_ifp->if_xname[0]);
 			if (bif->bif_flags & IFBIF_LEARNING)
 				(void) bridge_rtupdate(sc,
 				    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
@@ -1540,6 +1580,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			eh, IFT_ETHER, 1) != NULL)
 #endif /* NCARP > 0 */
 		    ) {
+			if (bridge_debug) printf("echo of our packet out %s\n",&bif->bif_ifp->if_xname[0]);
 			m_freem(m);
 			return (NULL);
 		}
