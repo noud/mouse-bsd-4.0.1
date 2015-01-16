@@ -110,10 +110,11 @@ __RCSID("$NetBSD: ps.c,v 1.61 2006/10/02 17:54:35 apb Exp $");
  * ARGOPTS must contain all option characters that take arguments
  * (except for 't'!) - it is used in kludge_oldps_options()
  */
-#define	GETOPTSTR	"acCeghjk:LlM:mN:O:o:p:rSsTt:U:uvW:wx"
+#define	GETOPTSTR	"acCeghHjk:LlM:mN:O:o:p:rSsTt:U:uvW:wx"
 #define	ARGOPTS		"kMNOopUW"
 
 struct kinfo_proc2 *kinfo;
+PROCAUX *kaux;
 struct varlist displaylist = SIMPLEQ_HEAD_INITIALIZER(displaylist);
 struct varlist sortlist = SIMPLEQ_HEAD_INITIALIZER(sortlist);
 
@@ -122,6 +123,7 @@ int	rawcpu;			/* -C */
 int	sumrusage;		/* -S */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
+int hierarchical;
 
 int	needcomm, needenv, commandonly;
 uid_t	myuid;
@@ -132,7 +134,6 @@ static struct kinfo_lwp
 static struct kinfo_proc2
 		*getkinfo_kvm(kvm_t *, int, int, int *);
 static char	*kludge_oldps_options(char *);
-static int	 pscomp(const void *, const void *);
 static void	 scanvars(void);
 static void	 usage(void);
 static int	 parsenum(const char *, const char *);
@@ -149,6 +150,125 @@ char vfmt[] = "pid state time sl re pagein vsz rss lim tsiz %cpu %mem command";
 struct varent *Opos = NULL; /* -O flag inserts after this point */
 
 kvm_t *kd;
+
+static int
+pscomp(const void *a, const void *b)
+{
+	const struct kinfo_proc2 *ka = &kinfo[((const PROCAUX *)a)->inx];
+	const struct kinfo_proc2 *kb = &kinfo[((const PROCAUX *)b)->inx];
+
+	int i;
+	int64_t i64;
+	VAR *v;
+	struct varent *ve;
+	const sigset_t *sa, *sb;
+
+#define	V_SIZE(k) (k->p_vm_dsize + k->p_vm_ssize + k->p_vm_tsize)
+#define	RDIFF_N(t, n) \
+	if (((const t *)((const char *)ka + v->off))[n] > ((const t *)((const char *)kb + v->off))[n]) \
+		return 1; \
+	if (((const t *)((const char *)ka + v->off))[n] < ((const t *)((const char *)kb + v->off))[n]) \
+		return -1;
+
+#define	RDIFF(type) RDIFF_N(type, 0); continue
+
+	SIMPLEQ_FOREACH(ve, &sortlist, next) {
+		v = ve->var;
+		if (v->flag & LWP)
+			/* LWP structure not available (yet) */
+			continue;
+		/* Sort on pvar() fields, + a few others */
+		switch (v->type) {
+		case CHAR:
+			RDIFF(char);
+		case UCHAR:
+			RDIFF(u_char);
+		case SHORT:
+			RDIFF(short);
+		case USHORT:
+			RDIFF(ushort);
+		case INT:
+			RDIFF(int);
+		case UINT:
+			RDIFF(uint);
+		case LONG:
+			RDIFF(long);
+		case ULONG:
+			RDIFF(ulong);
+		case INT32:
+			RDIFF(int32_t);
+		case UINT32:
+			RDIFF(uint32_t);
+		case SIGLIST:
+			sa = (const void *)((const char *)ka + v->off);
+			sb = (const void *)((const char *)kb + v->off);
+			i = 0;
+			do {
+				if (sa->__bits[i] > sb->__bits[i])
+					return 1;
+				if (sa->__bits[i] < sb->__bits[i])
+					return -1;
+				i++;
+			} while (i < sizeof sa->__bits / sizeof sa->__bits[0]);
+			continue;
+		case INT64:
+			RDIFF(int64_t);
+		case KPTR:
+		case KPTR24:
+		case UINT64:
+			RDIFF(uint64_t);
+		case TIMEVAL:
+			/* compare xxx_sec then xxx_usec */
+			RDIFF_N(uint32_t, 0);
+			RDIFF_N(uint32_t, 1);
+			continue;
+		case CPUTIME:
+			i64 = ka->p_rtime_sec * 1000000 + ka->p_rtime_usec;
+			i64 -= kb->p_rtime_sec * 1000000 + kb->p_rtime_usec;
+			if (sumrusage) {
+				i64 += ka->p_uctime_sec * 1000000
+				    + ka->p_uctime_usec;
+				i64 -= kb->p_uctime_sec * 1000000
+				    + kb->p_uctime_usec;
+			}
+			if (i64 != 0)
+				return i64 > 0 ? 1 : -1;
+			continue;
+		case PCPU:
+			i = getpcpu(kb) - getpcpu(ka);
+			if (i != 0)
+				return i;
+			continue;
+		case VSIZE:
+			i = V_SIZE(kb) - V_SIZE(ka);
+			if (i != 0)
+				return i;
+			continue;
+
+		default:
+			/* Ignore everything else */
+			break;
+		}
+	}
+	return 0;
+
+#undef VSIZE
+}
+
+static void sort_traditional(PROCAUX *vec, int len, int (*cmp)(const void *, const void *))
+{
+ qsort(vec,len,sizeof(PROCAUX),cmp);
+}
+
+static void sort_kinfo(int n)
+{
+ if (hierarchical) sort_hierarchical(kaux,n,&pscomp); else sort_traditional(kaux,n,&pscomp);
+}
+
+static void print_prefix(int depth)
+{
+ for (;depth>0;depth--) printf("| ");
+}
 
 int
 main(int argc, char *argv[])
@@ -196,6 +316,9 @@ main(int argc, char *argv[])
 			break;			/* no-op */
 		case 'h':
 			prtheader = ws.ws_row > 5 ? ws.ws_row : 22;
+			break;
+		case 'H':
+			hierarchical = 1;
 			break;
 		case 'j':
 			parsefmt(jfmt);
@@ -397,10 +520,11 @@ main(int argc, char *argv[])
 		printheader();
 		exit(1);
 	}
-	/*
-	 * sort proc list
-	 */
-	qsort(kinfo, nentries, sizeof(struct kinfo_proc2), pscomp);
+	kaux = malloc(nentries*sizeof(PROCAUX));
+	for (i=nentries-1;i>=0;i--) kaux[i].inx = i;
+
+	sort_kinfo(nentries);
+
 	/*
 	 * For each proc, call each variable output function in
 	 * "setwidth" mode to determine the widest element of
@@ -408,7 +532,7 @@ main(int argc, char *argv[])
 	 */
 	if (mode == PRINTMODE)
 		for (i = 0; i < nentries; i++) {
-			struct kinfo_proc2 *ki = &kinfo[i];
+			struct kinfo_proc2 *ki = &kinfo[kaux[i].inx];
 
 			if (xflg == 0 && (ki->p_tdev == NODEV ||
 			    (ki->p_flag & P_CONTROLT) == 0))
@@ -444,11 +568,17 @@ main(int argc, char *argv[])
 	 * print mode.
 	 */
 	for (i = lineno = 0; i < nentries; i++) {
-		struct kinfo_proc2 *ki = &kinfo[i];
+		struct kinfo_proc2 *ki = &kinfo[kaux[i].inx];
+		int realtw;
 
 		if (xflg == 0 && (ki->p_tdev == NODEV ||
 		    (ki->p_flag & P_CONTROLT ) == 0))
 			continue;
+		realtw = termwidth;
+		if (hierarchical) {
+			print_prefix(kaux[i].indent);
+			termwidth -= 2 * kaux[i].indent;
+		}
 		kl = kvm_getlwps(kd, ki->p_pid, (u_long)ki->p_paddr,
 		    sizeof(struct kinfo_lwp), &nlwps);
 		if (kl == 0)
@@ -481,6 +611,7 @@ main(int argc, char *argv[])
 				}
 			}
 		}
+		termwidth = realtw;
 	}
 	exit(eval);
 	/* NOTREACHED */
@@ -568,110 +699,6 @@ scanvars(void)
 	}
 }
 
-static int
-pscomp(const void *a, const void *b)
-{
-	const struct kinfo_proc2 *ka = (const struct kinfo_proc2 *)a;
-	const struct kinfo_proc2 *kb = (const struct kinfo_proc2 *)b;
-
-	int i;
-	int64_t i64;
-	VAR *v;
-	struct varent *ve;
-	const sigset_t *sa, *sb;
-
-#define	V_SIZE(k) (k->p_vm_dsize + k->p_vm_ssize + k->p_vm_tsize)
-#define	RDIFF_N(t, n) \
-	if (((const t *)((const char *)ka + v->off))[n] > ((const t *)((const char *)kb + v->off))[n]) \
-		return 1; \
-	if (((const t *)((const char *)ka + v->off))[n] < ((const t *)((const char *)kb + v->off))[n]) \
-		return -1;
-
-#define	RDIFF(type) RDIFF_N(type, 0); continue
-
-	SIMPLEQ_FOREACH(ve, &sortlist, next) {
-		v = ve->var;
-		if (v->flag & LWP)
-			/* LWP structure not available (yet) */
-			continue;
-		/* Sort on pvar() fields, + a few others */
-		switch (v->type) {
-		case CHAR:
-			RDIFF(char);
-		case UCHAR:
-			RDIFF(u_char);
-		case SHORT:
-			RDIFF(short);
-		case USHORT:
-			RDIFF(ushort);
-		case INT:
-			RDIFF(int);
-		case UINT:
-			RDIFF(uint);
-		case LONG:
-			RDIFF(long);
-		case ULONG:
-			RDIFF(ulong);
-		case INT32:
-			RDIFF(int32_t);
-		case UINT32:
-			RDIFF(uint32_t);
-		case SIGLIST:
-			sa = (const void *)((const char *)a + v->off);
-			sb = (const void *)((const char *)b + v->off);
-			i = 0;
-			do {
-				if (sa->__bits[i] > sb->__bits[i])
-					return 1;
-				if (sa->__bits[i] < sb->__bits[i])
-					return -1;
-				i++;
-			} while (i < sizeof sa->__bits / sizeof sa->__bits[0]);
-			continue;
-		case INT64:
-			RDIFF(int64_t);
-		case KPTR:
-		case KPTR24:
-		case UINT64:
-			RDIFF(uint64_t);
-		case TIMEVAL:
-			/* compare xxx_sec then xxx_usec */
-			RDIFF_N(uint32_t, 0);
-			RDIFF_N(uint32_t, 1);
-			continue;
-		case CPUTIME:
-			i64 = ka->p_rtime_sec * 1000000 + ka->p_rtime_usec;
-			i64 -= kb->p_rtime_sec * 1000000 + kb->p_rtime_usec;
-			if (sumrusage) {
-				i64 += ka->p_uctime_sec * 1000000
-				    + ka->p_uctime_usec;
-				i64 -= kb->p_uctime_sec * 1000000
-				    + kb->p_uctime_usec;
-			}
-			if (i64 != 0)
-				return i64 > 0 ? 1 : -1;
-			continue;
-		case PCPU:
-			i = getpcpu(kb) - getpcpu(ka);
-			if (i != 0)
-				return i;
-			continue;
-		case VSIZE:
-			i = V_SIZE(kb) - V_SIZE(ka);
-			if (i != 0)
-				return i;
-			continue;
-
-		default:
-			/* Ignore everything else */
-			break;
-		}
-	}
-	return 0;
-
-#undef VSIZE
-}
-
 /*
  * ICK (all for getopt), would rather hide the ugliness
  * here than taint the main code.
@@ -757,7 +784,7 @@ usage(void)
 
 	(void)fprintf(stderr,
 	    "usage:\t%s\n\t   %s\n\t%s\n",
-	    "ps [-acCehjlmrsSTuvwx] [-k key] [-O|o fmt] [-p pid] [-t tty]",
+	    "ps [-acCehHjlmrsSTuvwx] [-k key] [-O|o fmt] [-p pid] [-t tty]",
 	    "[-M core] [-N system] [-W swap] [-U username]",
 	    "ps [-L]");
 	exit(1);
