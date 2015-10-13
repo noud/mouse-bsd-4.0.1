@@ -174,12 +174,12 @@ mount_tmpfs(int argc, char *argv[])
 	}
 
 	if (realpath(argv[1], canon_dir) == NULL) {
-		err(EXIT_FAILURE, "realpath %s", argv[0]);
+		err(EXIT_FAILURE, "realpath %s", argv[1]);
 		/* NOTREACHED */
 	}
 
 	if (strncmp(argv[1], canon_dir, MAXPATHLEN) != 0) {
-		warnx("\"%s\" is a relative path", argv[0]);
+		warnx("\"%s\" is a relative path", argv[1]);
 		warnx("using \"%s\" instead", canon_dir);
 	}
 
