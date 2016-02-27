@@ -64,6 +64,8 @@
 #define _NETINET_IN_PCB_H_
 
 #include <sys/queue.h>
+#include <net/route.h>
+#include <netinet/ip.h>
 #include <netinet/in_pcb_hdr.h>
 
 /*
