@@ -79,7 +79,7 @@ static int wpa_driver_wired_get_ifflags(const char *ifname, int *flags)
 		return -1;
 	}
 	close(s);
-	*flags = ifr.ifr_flags & 0xffff;
+	*flags = ifr.ifr_flags;
 	return 0;
 }
 
@@ -97,7 +97,7 @@ static int wpa_driver_wired_set_ifflags(const char *ifname, int flags)
 
 	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-	ifr.ifr_flags = flags & 0xffff;
+	ifr.ifr_flags = flags;
 	if (ioctl(s, SIOCSIFFLAGS, (caddr_t) &ifr) < 0) {
 		perror("ioctl[SIOCSIFFLAGS]");
 		close(s);

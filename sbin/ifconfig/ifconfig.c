@@ -127,7 +127,7 @@ struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq __attribute__((aligned(4)));
 
 char	name[30];
-u_short	flags;
+unsigned long int flags;
 int	setaddr, doalias;
 u_long	metric, mtu, preference;
 int	clearaddr, s;

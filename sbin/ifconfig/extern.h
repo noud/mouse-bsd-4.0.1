@@ -55,7 +55,7 @@ extern int clearaddr;
 extern int newaddr;
 extern char name[30];
 
-extern u_short flags;
+extern unsigned long int flags;
 extern int lflag;
 extern int zflag;
 #ifdef INET6

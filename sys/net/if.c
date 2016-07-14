@@ -1235,7 +1235,7 @@ int
 ifpromisc(struct ifnet *ifp, int pswitch)
 {
 	int pcount, ret;
-	short flags;
+	unsigned long int flags;
 	struct ifreq ifr;
 
 	pcount = ifp->if_pcount;
@@ -1326,7 +1326,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 	struct ifcapreq *ifcr;
 	struct ifdatareq *ifdr;
 	int s, error = 0;
-	short oif_flags;
+	unsigned long int oif_flags;
 
 	switch (cmd) {
 
