@@ -333,6 +333,8 @@ const struct cmd {
 	{ "-tso6",	-IFCAP_TSOv6,	0,		setifcaps },
 	{ "agrport",	NEXTARG,	0,		agraddport } ,
 	{ "-agrport",	NEXTARG,	0,		agrremport } ,
+	{ "noproto",	IFF_NOPROTO,	0,		setifflags } ,
+	{ "-noproto",	-IFF_NOPROTO,	0,		setifflags } ,
 	{ 0,		0,		0,		setifaddr },
 	{ 0,		0,		0,		setifdstaddr },
 };
