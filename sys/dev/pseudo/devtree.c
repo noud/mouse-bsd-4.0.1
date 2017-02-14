@@ -309,7 +309,7 @@ DEVSW_SCLASS int devtreeread(dev_t dev, struct uio *uio, int ioflag)
        free(db,M_DEVBUF);
      }
   }
- SC_DBQLEN_CHECK();
+ SC_DBQLEN_CHECK(sc);
  if (devtree_verbose) printf("devtreeread %d: done\n",u);
  return(0);
 }
