@@ -136,6 +136,10 @@ restart:
 		error = ENOTDIR;
 		goto bad;
 	}
+	if ((fmode & O_PLAIN) && vp && (vp->v_type != VREG)) {
+		error = ENOTPLAIN;
+		goto bad;
+	}
 
 #if NVERIEXEC > 0
 	error = veriexec_openchk(l, ndp->ni_vp, ndp->ni_dirp, fmode);
