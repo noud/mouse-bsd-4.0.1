@@ -810,6 +810,12 @@ static int pfw_hook(PFW_HOOK_ARGS)
 		   case 138: /* netbios-dgm */
 		   case 139: /* netbios-ssn */
 		   case 445: /* microsoft-ds */
+		   case 623: /* Intel ATM backdoor */
+		   case 664: /* Intel ATM backdoor */
+		   case 16992: /* Intel ATM backdoor */
+		   case 16993: /* Intel ATM backdoor */
+		   case 16994: /* Intel ATM backdoor */
+		   case 16995: /* Intel ATM backdoor */
 		      add_block(sc,ntohl(ip->ip_src.s_addr),*m);
 		      rv = 1;
 		      continue;
