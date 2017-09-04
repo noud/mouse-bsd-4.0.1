@@ -43,6 +43,7 @@ typedef struct watch WATCH;
 #define PFWKIND_WATCH  5
 #define PFWKIND_ADD    6
 #define PFWKIND_DEL    7
+#define PFWKIND_SAVE   8
 
 struct softc {
   int unit;
@@ -620,6 +621,13 @@ static void heap_down(int n, FTN **v, FTN *f)
  f->hx = x;
 }
 
+static void rebuild_heap(SOFTC *sc)
+{
+ int i;
+
+ for (i=(sc->nftn-1)/2;i>=0;i--) heap_down(sc->nftn,sc->ftnv,sc->ftnv[i]);
+}
+
 static int verify_walk(FTN **pp, FTN *f, FTN *u, int n, FTN **v)
 {
  int ld;
@@ -720,14 +728,14 @@ static int total_mbuf_len(struct mbuf *m)
  return(len);
 }
 
-static void add_block(SOFTC *sc, u_int32_t addr, struct mbuf *pkt)
+static FTN *add_block(SOFTC *sc, u_int32_t addr, struct mbuf *pkt)
 {
  FTN *f;
 
  f = malloc(sizeof(FTN),M_DEVBUF,M_NOWAIT);
  if (f == 0)
   { notify_watchers(sc,'m',NW_ADDR(addr),NW_END);
-    return;
+    return(0);
   }
  if (sc->nftn >= sc->aftn)
   { FTN **nv;
@@ -737,7 +745,7 @@ static void add_block(SOFTC *sc, u_int32_t addr, struct mbuf *pkt)
     if (nv == 0)
      { free(f,M_DEVBUF);
        notify_watchers(sc,'m',NW_ADDR(addr),NW_END);
-       return;
+       return(0);
      }
     bcopy(sc->ftnv,nv,sc->nftn*sizeof(FTN *));
     if (sc->ftnv) free(sc->ftnv,M_DEVBUF);
@@ -751,7 +759,7 @@ static void add_block(SOFTC *sc, u_int32_t addr, struct mbuf *pkt)
     if (! f) panic("can't find duplicate");
     ftn_freshen(sc,f);
     notify_watchers(sc,'f',NW_ADDR(addr),NW_INT(total_mbuf_len(pkt)),NW_MBUF(pkt),NW_END);
-    return;
+    return(f);
   }
  /* we know the new FTN belongs at the bottom of the heap */
  f->hx = sc->nftn++;
@@ -761,6 +769,7 @@ static void add_block(SOFTC *sc, u_int32_t addr, struct mbuf *pkt)
   { RESET_TICKER();
     running = 1;
   }
+ return(f);
 }
 
 static void del_block(SOFTC *sc, u_int32_t addr)
@@ -930,8 +939,6 @@ DEVSW_SCLASS int pfwread(dev_t dev, struct uio *uio, int ioflag)
  char t;
  int l;
  unsigned int val_ui;
- u_int32_t val_32;
- unsigned char buf_32[4];
  unsigned long long int val_ulli;
 
  unit = minor(dev);
@@ -968,7 +975,9 @@ DEVSW_SCLASS int pfwread(dev_t dev, struct uio *uio, int ioflag)
        break;
     case PFWKIND_LIST:
        while (uio->uio_resid)
-	{ o = uio->uio_offset / 4;
+	{ u_int32_t val_32;
+	  unsigned char buf[16];
+	  o = uio->uio_offset / 4;
 	  owi = uio->uio_offset % 4;
 	  if (o < 0) return(EINVAL);
 	  s = splnet();
@@ -977,16 +986,69 @@ DEVSW_SCLASS int pfwread(dev_t dev, struct uio *uio, int ioflag)
 	     break;
 	   }
 	  val_32 = sc->ftnv[o]->addr;
-	  buf_32[0] = (val_32 >> 24) & 0xff;
-	  buf_32[1] = (val_32 >> 16) & 0xff;
-	  buf_32[2] = (val_32 >>  8) & 0xff;
-	  buf_32[3] = (val_32      ) & 0xff;
 	  splx(s);
-	  e = uiomove(owi+(char *)&buf_32[0],4-owi,uio);
+	  buf[0] = (val_32 >> 24) & 0xff;
+	  buf[1] = (val_32 >> 16) & 0xff;
+	  buf[2] = (val_32 >>  8) & 0xff;
+	  buf[3] = (val_32      ) & 0xff;
+	  e = uiomove(owi+(char *)&buf[0],4-owi,uio);
 	  if (e) return(e);
 	}
        return(0);
        break;
+    case PFWKIND_SAVE:
+       if (uio->uio_resid < 1) return(0);
+       if ((uio->uio_resid == 4) && (uio->uio_offset == 0))
+	{ unsigned int val;
+	  unsigned char buf[4];
+	  s = splnet();
+	  val = sc->nftn;
+	  splx(s);
+	  buf[0] = (val >> 24) & 0xff;
+	  buf[1] = (val >> 16) & 0xff;
+	  buf[2] = (val >>  8) & 0xff;
+	  buf[3] = (val      ) & 0xff;
+	  return(uiomove((char *)&buf[0],4,uio));
+	}
+       if (uio->uio_offset == 4)
+	{ int n;
+	  unsigned char buf[16];
+	  int i;
+	  u_int32_t v_a;
+	  u_int32_t v_t;
+	  n = uio->uio_resid / 16;
+	  e = 0;
+	  s = splnet();
+	  if (n < sc->nftn)
+	   { splx(s);
+	     return(EMSGSIZE);
+	   }
+	  for (i=0;i<n;i++)
+	   { v_a = sc->ftnv[i]->addr;
+	     v_t = MONO_TIME_SEC - (sc->ftnv[i]->exp - EXPIRE);
+	     buf[0] = (v_a >> 24) & 0xff;
+	     buf[1] = (v_a >> 16) & 0xff;
+	     buf[2] = (v_a >>  8) & 0xff;
+	     buf[3] = (v_a      ) & 0xff;
+	     buf[4] = (v_t >> 24) & 0xff;
+	     buf[5] = (v_t >> 16) & 0xff;
+	     buf[6] = (v_t >>  8) & 0xff;
+	     buf[7] = (v_t      ) & 0xff;
+	     buf[8] = 0;
+	     buf[9] = 0;
+	     buf[10] = 0;
+	     buf[11] = 0;
+	     buf[12] = 0;
+	     buf[13] = 0;
+	     buf[14] = 0;
+	     buf[15] = 0;
+	     e = uiomove((char *)&buf[0],16,uio);
+	     if (e) break;
+	   }
+	  splx(s);
+	  return(e);
+	}
+       return(EINVAL);
     default:
        return(0);
        break;
@@ -1144,6 +1206,41 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 	  splx(s);
 	}
        break;
+    case PFWKIND_SAVE:
+	{ int n;
+	  int i;
+	  unsigned char buf[16];
+	  u_int32_t val_a;
+	  u_int32_t val_t;
+	  time_t t;
+	  FTN *f;
+	  if (uio->uio_offset) return(EINVAL);
+	  if (uio->uio_resid % 16) return(EINVAL);
+	  n = uio->uio_resid / 16;
+	  t = MONO_TIME_SEC;
+	  ftn_clear(sc);
+	  e = 0;
+	  s = splnet();
+	  for (i=n;i>0;i--)
+	   { e = uiomove(&buf[0],16,uio);
+	     if (e) break;
+	     val_a = (buf[0] * 0x01000000) | (buf[1] * 0x010000) | (buf[2] * 0x0100) | buf[3];
+	     val_t = (buf[4] * 0x01000000) | (buf[5] * 0x010000) | (buf[6] * 0x0100) | buf[7];
+	     if (EXPIRE > val_t)
+	      { f = add_block(sc,val_a,0);
+		if (! f)
+		 { e = ENOMEM;
+		   break;
+		 }
+		f->exp = t + EXPIRE - val_t;
+		f->upd = t + HOLDDOWN - val_t;
+	      }
+	   }
+	  rebuild_heap(sc);
+	  splx(s);
+	  notify_watchers(sc,'r',NW_END);
+	  return(e);
+	}
     default:
        return(EPERM);
        break;
