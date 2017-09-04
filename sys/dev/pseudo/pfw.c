@@ -25,6 +25,9 @@
 
 #include <dev/pseudo/pfw-kern.h>
 
+#define EXPIRE 86400
+#define HOLDDOWN 3600
+
 typedef struct softc SOFTC;
 typedef struct ftn FTN;
 typedef struct watch WATCH;
@@ -661,8 +664,8 @@ static void verify(SOFTC *sc)
 
 static void ftn_freshen(SOFTC *sc, FTN *f)
 {
- f->exp = MONO_TIME_SEC + 86400;
- f->upd = MONO_TIME_SEC + 3600;
+ f->exp = MONO_TIME_SEC + EXPIRE;
+ f->upd = MONO_TIME_SEC + HOLDDOWN;
  heap_down(sc->nftn,sc->ftnv,f);
  serial ++;
  verify(sc);
