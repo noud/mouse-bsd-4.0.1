@@ -1236,6 +1236,13 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 		f->upd = t + HOLDDOWN - val_t;
 	      }
 	   }
+	  /*
+	   * add_block() puts the new FTNs into the heap, but we have
+	   *  to rebuild it anyway, because the expiration times ave
+	   *  been changed from the ones they were put into the heap
+	   *  under.  The `heap' probably is not a heap at the
+	   *  moment....
+	   */
 	  rebuild_heap(sc);
 	  splx(s);
 	  notify_watchers(sc,'r',NW_END);
