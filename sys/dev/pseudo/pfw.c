@@ -668,7 +668,9 @@ static void rebuild_heap(SOFTC *sc)
 {
  int i;
 
+ if (sc->nftn < 1) return;
  for (i=(sc->nftn-1)/2;i>=0;i--) heap_down(sc->nftn,sc->ftnv,sc->ftnv[i]);
+ verify(sc);
 }
 
 static void ftn_freshen(SOFTC *sc, FTN *f)
