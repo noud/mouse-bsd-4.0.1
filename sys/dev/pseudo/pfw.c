@@ -622,13 +622,6 @@ static void heap_down(int n, FTN **v, FTN *f)
  f->hx = x;
 }
 
-static void rebuild_heap(SOFTC *sc)
-{
- int i;
-
- for (i=(sc->nftn-1)/2;i>=0;i--) heap_down(sc->nftn,sc->ftnv,sc->ftnv[i]);
-}
-
 static int verify_walk(FTN **pp, FTN *f, FTN *u, int n, FTN **v)
 {
  int ld;
@@ -669,6 +662,13 @@ static void verify(SOFTC *sc)
  p = 0;
  verify_walk(&p,sc->ftnr,0,sc->nftn,sc->ftnv);
  splx(s);
+}
+
+static void rebuild_heap(SOFTC *sc)
+{
+ int i;
+
+ for (i=(sc->nftn-1)/2;i>=0;i--) heap_down(sc->nftn,sc->ftnv,sc->ftnv[i]);
 }
 
 static void ftn_freshen(SOFTC *sc, FTN *f)
