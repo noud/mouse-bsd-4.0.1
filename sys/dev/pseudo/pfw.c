@@ -89,7 +89,6 @@ static unsigned long long int serial;
 static struct proc *watchproc;
 DECLARE_TICKER_HANDLE
 DECLARE_INET_PFIL_HEAD
-volatile int pfwdebug = 0;
 static int noverify = 0;
 
 /*
@@ -740,7 +739,6 @@ static FTN *add_block(SOFTC *sc, u_int32_t addr, struct mbuf *pkt)
  f = malloc(sizeof(FTN),M_DEVBUF,M_NOWAIT);
  if (f == 0)
   { notify_watchers(sc,'m',NW_ADDR(addr),NW_END);
-    if (pfwdebug) printf("add_block: malloc failed (FTN)\n");
     return(0);
   }
  if (sc->nftn >= sc->aftn)
@@ -751,7 +749,6 @@ static FTN *add_block(SOFTC *sc, u_int32_t addr, struct mbuf *pkt)
     if (nv == 0)
      { free(f,M_DEVBUF);
        notify_watchers(sc,'m',NW_ADDR(addr),NW_END);
-       if (pfwdebug) printf("add_block: malloc failed (v)\n");
        return(0);
      }
     bcopy(sc->ftnv,nv,sc->nftn*sizeof(FTN *));
@@ -766,7 +763,6 @@ static FTN *add_block(SOFTC *sc, u_int32_t addr, struct mbuf *pkt)
     if (! f) panic("can't find duplicate");
     ftn_freshen(sc,f);
     notify_watchers(sc,'f',NW_ADDR(addr),NW_INT(total_mbuf_len(pkt)),NW_MBUF(pkt),NW_END);
-    if (pfwdebug) printf("add_block: duplicate\n");
     return(f);
   }
  /* we know the new FTN belongs at the bottom of the heap */
@@ -777,7 +773,6 @@ static FTN *add_block(SOFTC *sc, u_int32_t addr, struct mbuf *pkt)
   { RESET_TICKER();
     running = 1;
   }
- if (pfwdebug) printf("add_block: normal (nftn now %d)\n",sc->nftn);
  return(f);
 }
 
@@ -1223,7 +1218,6 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 	  u_int32_t val_t;
 	  time_t t;
 	  FTN *f;
-	  pfwdebug = 1;
 	  noverify = 1;
 	  if (uio->uio_offset) return(EINVAL);
 	  if (uio->uio_resid % 16) return(EINVAL);
@@ -1246,9 +1240,6 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 		f->exp = t + EXPIRE - val_t;
 		f->upd = t + HOLDDOWN - val_t;
 	      }
-	     else
-	      { if (pfwdebug) printf("skipping, EXPIRE (%d) <= val_t (%d)\n",(int)EXPIRE,(int)val_t);
-	      }
 	   }
 	  /*
 	   * add_block() puts the new FTNs into the heap, but we have
@@ -1261,7 +1252,6 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 	  rebuild_heap(sc);
 	  splx(s);
 	  notify_watchers(sc,'r',NW_END);
-	  pfwdebug = 0;
 	  return(e);
 	}
     default:
