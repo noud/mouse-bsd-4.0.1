@@ -90,6 +90,7 @@ static struct proc *watchproc;
 DECLARE_TICKER_HANDLE
 DECLARE_INET_PFIL_HEAD
 volatile int pfwdebug = 0;
+static int noverify = 0;
 
 /*
  * Rebalance the binary tree after an insertion or deletion.  *up is
@@ -648,6 +649,7 @@ static void verify(SOFTC *sc)
  FTN *f;
  FTN *p;
 
+ if (noverify) return;
  s = splnet();
  for (i=0;i<sc->nftn;i++)
   { f = sc->ftnv[i];
@@ -1222,6 +1224,7 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 	  time_t t;
 	  FTN *f;
 	  pfwdebug = 1;
+	  noverify = 1;
 	  if (uio->uio_offset) return(EINVAL);
 	  if (uio->uio_resid % 16) return(EINVAL);
 	  n = uio->uio_resid / 16;
@@ -1254,6 +1257,7 @@ DEVSW_SCLASS int pfwwrite(dev_t dev, struct uio *uio, int ioflag)
 	   *  under.  The `heap' probably is not a heap at the
 	   *  moment....
 	   */
+	  noverify = 0;
 	  rebuild_heap(sc);
 	  splx(s);
 	  notify_watchers(sc,'r',NW_END);
