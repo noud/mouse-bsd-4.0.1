@@ -1015,7 +1015,7 @@ setroot(struct device *bootdv, int bootpartition)
 			}
 		}
 
-	} else if (rootspec == NULL) {
+	} else if (!rootspec || (rootspec[0] == '*')) {
 		int majdev;
 
 		/*
@@ -1032,7 +1032,7 @@ setroot(struct device *bootdv, int bootpartition)
 			if (DEV_USES_PARTITIONS(bootdv))
 				rootdev = MAKEDISKDEV(majdev,
 						      device_unit(bootdv),
-						      bootpartition);
+						      rootspec?(rootspec[1]-'a'):bootpartition);
 			else
 				rootdev = makedev(majdev, device_unit(bootdv));
 		}

@@ -218,6 +218,10 @@ package[ \t]+{FILENAME}	{
 	}
 #.*	{ /* ignored (comment) */; }
 [ \t]+	{ /* ignored (white space) */; }
+\*[a-z] {
+		yylval.str = intern(yytext);
+		return(STARLETTER);
+	}
 .	{ return yytext[0]; }
 <<EOF>> {
 		if (incl == NULL)
