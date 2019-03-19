@@ -146,10 +146,10 @@ char *boot_path = 0;			/* name of file we actually opened */
 
 #define DEFAULT_ACTIVE	(~(daddr_t)0)
 
-#define OPTIONS			"0123BFSafiluvs:b:c:E:r:w:t:T:"
+#define OPTIONS			"0123BFSafiluvs:b:c:E:r:w:t:T:X"
 #else
 #define change_part(e, p, id, st, sz, bm) change__part(e, p, id, st, sz)
-#define OPTIONS			"0123FSafiluvs:b:c:E:r:w:"
+#define OPTIONS			"0123FSafiluvs:b:c:E:r:w:X"
 #endif
 
 unsigned int dos_cylinders;
@@ -186,6 +186,7 @@ int B_flag;		/* Edit/install bootselect code */
 int E_flag;		/* extended partition number */
 int b_cyl, b_head, b_sec;  /* b_flag values. */
 int F_flag = 0;
+static int expert_mode = 0;
 
 struct mbr_sector bootcode[8192 / sizeof (struct mbr_sector)];
 int bootsize;		/* actual size of bootcode */
@@ -383,6 +384,11 @@ main(int argc, char *argv[])
 		case 'T':
 			disk_type = optarg;
 			break;
+		case 'X':
+			expert_mode = 1;
+			printf("Expert mode - sanity checks disabled.\n");
+			printf("Be careful.\n");
+			break;
 		default:
 			usage();
 		}
@@ -525,7 +531,8 @@ usage(void)
 		"\t-v verbose output, -v -v more verbose still\n"
 		"\t-B update bootselect options\n"
 		"\t-F treat device as a regular file\n"
-		"\t-S output as shell defines\n",
+		"\t-S output as shell defines\n"
+		"\t-X expert mode, disable sanity checks\n",
 		getprogname(), indent, "", indent, "", indent, "");
 	exit(1);
 }
@@ -915,10 +922,11 @@ read_boot(const char *name, void *buf, size_t len, int err_exit)
 		goto fail;
 	}
 	ret = st.st_size;
-	if (ret < 0x200) {
-		warnx("%s: bootcode too small", boot_path);
-		goto fail;
-	}
+ if (ret < 0x200)
+  { warnx("%s: bootcode too small", boot_path);
+    if (! expert_mode) goto fail;
+    warnx("(expert mode, continuing anyway)");
+  }
 	if (read(bfd, buf, len) != ret) {
 		warn("%s", boot_path);
 		goto fail;
@@ -927,10 +935,11 @@ read_boot(const char *name, void *buf, size_t len, int err_exit)
 	/*
 	 * Do some sanity checking here
 	 */
-	if (((struct mbr_sector *)buf)->mbr_magic != LE_MBR_MAGIC) {
-		warnx("%s: invalid magic", boot_path);
-		goto fail;
-	}
+ if (((struct mbr_sector *)buf)->mbr_magic != LE_MBR_MAGIC)
+  { warnx("%s: invalid magic", boot_path);
+    if (! expert_mode) goto fail;
+    warnx("(expert mode, continuing anyway)");
+  }
 
 	close(bfd);
 	ret = (ret + 0x1ff) & ~0x1ff;
@@ -1285,7 +1294,7 @@ install_bootsel(int needed)
 	    && (bootcode[0].mbr_bootsel_magic != LE_MBR_BS_MAGIC
 	    || ((bootcode[0].mbr_bootsel.mbrbs_flags & needed) != needed))) {
 		/* No it doesn't... */
-		if (f_flag)
+		if (f_flag || expert_mode)
 			warnx("Bootfile %s doesn't support "
 				    "required bootsel options", boot_path );
 			/* But install it anyway */
@@ -1627,14 +1636,32 @@ add_ext_ptn(daddr_t start, daddr_t size)
 static const char *
 check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 {
+ __label__ err_;
+
 	int p;
 	unsigned int p_s, p_e;
+ const char *errmsg;
 
+ void e(const char *msg)
+  { if (expert_mode)
+     { printf("%s\n",msg);
+     }
+    else
+     { errmsg = msg;
+       goto err_;
+     }
+  }
+
+ if (0)
+  {
+err_:;
+    return(errmsg);
+  }
 	if (sysid != 0) {
 		if (start < dos_sectors)
-			return "Track zero is reserved for the BIOS";
+			e("Track zero is reserved for the BIOS");
 		if (start + size > disksectors) 
-			return "Partition exceeds size of disk";
+			e("Partition exceeds size of disk");
 		for (p = 0; p < MBR_PART_COUNT; p++) {
 			if (p == part || mboot.mbr_parts[p].mbrp_type == 0)
 				continue;
@@ -1647,7 +1674,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 					delete_ptn(p);
 				return 0;
 			}
-			return "Overlaps another partition";
+			e("Overlaps another partition");
 		}
 	}
 
@@ -1659,7 +1686,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 		/* making an extended partition */
 		if (ext.base != 0) {
 			if (!f_flag)
-				return "There cannot be 2 extended partitions";
+				e("There cannot be multiple extended partitions");
 			if (fix)
 				delete_ptn(ext.ptn_id);
 		}
@@ -1710,7 +1737,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 		if (p_s >= start && p_e <= start + size)
 			continue;
 		if (!f_flag)
-			return "Extended partition outside main partition";
+			e("Extended partition outside main partition");
 		if (fix)
 			delete_ext_ptn(p);
 	}
@@ -1746,20 +1773,39 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 static const char *
 check_ext_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 {
+ __label__ err_;
+
 	int p;
 	unsigned int p_s, p_e;
+ const char *errmsg;
+
+ void e(const char *msg)
+  { if (expert_mode)
+     { printf("%s\n",msg);
+     }
+    else
+     { errmsg = msg;
+       goto err_;
+     }
+  }
+
+ if (0)
+  {
+err_:;
+    return(errmsg);
+  }
 
 	if (sysid == 0)
 		return 0;
 
 	if (MBR_IS_EXTENDED(sysid))
-		return "Nested extended partitions are not allowed";
+		e("Nested extended partitions are not allowed");
 
 	/* allow one track at start for extended partition header */
 	start -= dos_sectors;
 	size += dos_sectors;
 	if (start < ext.base || start + size > ext.limit)
-		return "Outside bounds of extended partition";
+		e("Outside bounds of extended partition");
 
 	if (f_flag && !fix)
 		return 0;
@@ -1775,7 +1821,7 @@ check_ext_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 							- dos_sectors;
 		if (start < p_e && start + size > p_s) {
 			if (!f_flag)
-				return "Overlaps another extended partition";
+				e("Overlaps another extended partition");
 			if (fix) {
 				if (part == -1)
 					delete_ext_ptn(p);
@@ -2633,6 +2679,10 @@ decimal(const char *prompt, int dflt, int flags, int minval, int maxval)
 		if (acc >= minval && acc <= maxval)
 			return acc;
 		printf("%d is not between %d and %d.\n", acc, minval, maxval);
+		   if (expert_mode)
+		    { printf("(expert mode, using it anyway)\n");
+		      return(acc);
+		    }
 	}
 }
 

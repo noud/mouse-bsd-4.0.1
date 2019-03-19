@@ -8,7 +8,7 @@
 .Nd MS-DOS partition maintenance program
 .Sh SYNOPSIS
 .Nm
-.Op Fl afiuvBFS
+.Op Fl afiuvBFSX
 .Bk -words
 .Op Fl 0 | 1 | 2 | 3
 .Ek
@@ -335,6 +335,12 @@ allows the user to change more parameters than normally permitted.
 Write the modified partition table to file
 .Ar file
 instead of the disk.
+.It Fl X
+Turn on
+.Sq expert
+mode.  This disables various sanity checks, demoting them to warnings.
+Do not use it unless you are sure you know what you are doing (or you
+are working on a scratch disk).
 .El
 .Pp
 When called with no arguments, it prints the partition table.
