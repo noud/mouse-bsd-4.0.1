@@ -184,10 +184,11 @@ TOOL_ZIC?=		zic
 
 .c.ln:
 	${_MKTARGET_COMPILE}
-	${LINT} ${LINTFLAGS} \
+	: ${LINT} ${LINTFLAGS} \
 	    ${CPPFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    ${CPPFLAGS.${.IMPSRC:T}:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    -i ${.IMPSRC}
+	touch ${.IMPSRC:T:R}.ln
 
 # C++
 .cc.o .cpp.o .cxx.o .C.o:

@@ -481,10 +481,11 @@ llib-l${LIB}.ln: ${LOBJS}
 	${_MKTARGET_COMPILE}
 	rm -f llib-l${LIB}.ln
 .if defined(DESTDIR)
-	${LINT} -C${LIB} ${.ALLSRC} -L${DESTDIR}/usr/libdata ${LLIBS}
+	: ${LINT} -C${LIB} ${.ALLSRC} -L${DESTDIR}/usr/libdata ${LLIBS}
 .else
-	${LINT} -C${LIB} ${.ALLSRC} ${LLIBS}
+	: ${LINT} -C${LIB} ${.ALLSRC} ${LLIBS}
 .endif
+	touch llib-l${LIB}.ln
 .endif									# }
 
 cleanlib: .PHONY
