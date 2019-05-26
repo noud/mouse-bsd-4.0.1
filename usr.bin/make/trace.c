@@ -103,8 +103,8 @@ Trace_Log(TrEvent event, Job *job)
 
 	gettimeofday(&rightnow, NULL);
 
-	fprintf(trfile, "%ld.%06d %d %s %d %s",
-	    rightnow.tv_sec, (int)rightnow.tv_usec,
+	fprintf(trfile, "%lld.%06d %d %s %d %s",
+	    (long long int)rightnow.tv_sec, (int)rightnow.tv_usec,
 	    jobTokensRunning,
 	    evname[event], trpid, trwd);
 	if (job != NULL) {

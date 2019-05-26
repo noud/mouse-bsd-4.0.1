@@ -150,9 +150,9 @@ prusage(struct rusage *r0, struct rusage *r1, struct timeval *e,
 	else if (cp[1])
 	    switch (*++cp) {
 	    case 'D':		/* (average) unshared data size */
-		(void)fprintf(cshout, "%ld", t == 0 ? 0L :
+		(void)fprintf(cshout, "%lld", t == 0 ? 0LL :
 			(r1->ru_idrss + r1->ru_isrss -
-			 (r0->ru_idrss + r0->ru_isrss)) / t);
+			 (r0->ru_idrss + r0->ru_isrss)) / (long long int)t);
 		break;
 	    case 'E':		/* elapsed (wall-clock) time */
 		pcsecs((long) ms);
@@ -164,9 +164,9 @@ prusage(struct rusage *r0, struct rusage *r1, struct timeval *e,
 		(void)fprintf(cshout, "%ld", r1->ru_inblock - r0->ru_inblock);
 		break;
 	    case 'K':		/* (average) total data memory used  */
-		(void)fprintf(cshout, "%ld", t == 0 ? 0L :
+		(void)fprintf(cshout, "%lld", t == 0 ? 0LL :
 			((r1->ru_ixrss + r1->ru_isrss + r1->ru_idrss) -
-			 (r0->ru_ixrss + r0->ru_idrss + r0->ru_isrss)) / t);
+			 (r0->ru_ixrss + r0->ru_idrss + r0->ru_isrss)) / (long long int)t);
 		break;
 	    case 'M':		/* max. Resident Set Size */
 		(void)fprintf(cshout, "%ld", r1->ru_maxrss / 2L);
@@ -196,8 +196,8 @@ prusage(struct rusage *r0, struct rusage *r1, struct timeval *e,
 		(void)fprintf(cshout, "%ld", i);
 		break;
 	    case 'X':		/* (average) shared text size */
-		(void)fprintf(cshout, "%ld", t == 0 ? 0L : 
-			       (r1->ru_ixrss - r0->ru_ixrss) / t);
+		(void)fprintf(cshout, "%lld", t == 0 ? 0LL : 
+			       (r1->ru_ixrss - r0->ru_ixrss) / (long long int)t);
 		break;
 	    case 'c':		/* num. involuntary context switches */
 		(void)fprintf(cshout, "%ld", r1->ru_nivcsw - r0->ru_nivcsw);

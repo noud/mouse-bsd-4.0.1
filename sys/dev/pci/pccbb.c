@@ -1356,8 +1356,8 @@ pccbb_power(cardbus_chipset_tag_t ct, int command)
 	splx(s);
 	microtime(&after);
 	timersub(&after, &before, &diff);
-	aprint_debug("%s: wait took%s %ld.%06lds\n", sc->sc_dev.dv_xname,
-	    (on && times < 0) ? " too long" : "", diff.tv_sec, diff.tv_usec);
+	aprint_debug("%s: wait took%s %lld.%06lds\n", sc->sc_dev.dv_xname,
+	    (on && times < 0) ? " too long" : "", (long long int)diff.tv_sec, (long int)diff.tv_usec);
 
 	/*
 	 * Ok, wait a bit longer for things to settle.

@@ -217,9 +217,9 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	len = snprintf(bf, LBFSZ,
 	    "%d (%s) %c %d %d %d %d %d "
 	    "%u "
-	    "%lu %lu %lu %lu %lu %lu %lu %lu "
+	    "%lu %lu %lu %lu %llu %llu %llu %llu "
 	    "%d %d %d "
-	    "%lu %lu %lu %lu %" PRIu64 " "
+	    "%llu %llu %lu %lu %" PRIu64 " "
 	    "%lu %lu %lu "
 	    "%u %u "
 	    "%u %u %u %u "
@@ -241,17 +241,17 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	    cru->ru_minflt,
 	    ru->ru_majflt,
 	    cru->ru_majflt,
-	    ru->ru_utime.tv_sec,
-	    ru->ru_stime.tv_sec,
-	    cru->ru_utime.tv_sec,
-	    cru->ru_stime.tv_sec,
+	    (unsigned long long int)ru->ru_utime.tv_sec,
+	    (unsigned long long int)ru->ru_stime.tv_sec,
+	    (unsigned long long int)cru->ru_utime.tv_sec,
+	    (unsigned long long int)cru->ru_stime.tv_sec,
 
 	    p->p_nice,					/* XXX: priority */
 	    p->p_nice,
 	    0,
 
-	    p->p_rtime.tv_sec,
-	    p->p_stats->p_start.tv_sec,
+	    (unsigned long long int)p->p_rtime.tv_sec,
+	    (unsigned long long int)p->p_stats->p_start.tv_sec,
 	    ru->ru_ixrss + ru->ru_idrss + ru->ru_isrss,
 	    ru->ru_maxrss,
 	    p->p_rlimit[RLIMIT_RSS].rlim_cur,
@@ -320,8 +320,8 @@ procfs_douptime(struct lwp *curl, struct proc *p,
 	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
 	idle = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
 	len = snprintf(bf, LBFSZ,
-	    "%lu.%02lu %" PRIu64 ".%02" PRIu64 "\n",
-	    runtime.tv_sec, runtime.tv_usec / 10000,
+	    "%llu.%02u %" PRIu64 ".%02" PRIu64 "\n",
+	    (unsigned long long int)runtime.tv_sec, (unsigned int)(runtime.tv_usec / 10000),
 	    idle / hz, (((idle % hz) * 100) / hz) % 100);
 
 	if (len == 0)
