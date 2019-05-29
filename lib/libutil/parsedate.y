@@ -31,7 +31,33 @@
    unportable parsedate.c's), but that seems to cause as many problems
    as it solves.  */
 
+#define yychar parsedate_yychar
+#define yycheck parsedate_yycheck
+#define yydebug parsedate_yydebug
+#define yydefred parsedate_yydefred
+#define yydgoto parsedate_yydgoto
+#define yyerrflag parsedate_yyerrflag
+#define yygindex parsedate_yygindex
+#define yylen parsedate_yylen
+#define yylhs parsedate_yylhs
+#define yylval parsedate_yylval
+#define yynerrs parsedate_yynerrs
 #define yyparse parsedate_yyparse
+#define yyrindex parsedate_yyrindex
+#define yysindex parsedate_yysindex
+#define yyss parsedate_yyss
+#define yysslim parsedate_yysslim
+#define yyssp parsedate_yyssp
+#define yystacksize parsedate_yystacksize
+#define yytable parsedate_yytable
+#define yyval parsedate_yyval
+#define yyvs parsedate_yyvs
+#define yyvsp parsedate_yyvsp
+/*
+ * These next two were present in the NetBSD tree, but no trace of them
+ *  shows up in the symbol table of the .o, so I'm not sure they're
+ *  necessary.  They don't seem to hurt anything, though.
+ */
 #define yylex parsedate_yylex
 #define yyerror parsedate_yyerror
 
