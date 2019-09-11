@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 			break;
 		case 'r':		/* user specified seconds */
 			rflag = 1;
-			tval = strtol(optarg, NULL, 0);
+			tval = strtoll(optarg, NULL, 0);
 			break;
 		case 'u':		/* do everything in UTC */
 			(void)putenv("TZ=UTC0");
