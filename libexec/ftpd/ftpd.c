@@ -3593,14 +3593,7 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
 
 	time(&now);
 	len = snprintf(buf, sizeof(buf),
-	    "%.24s %lld %s " LLF " %s %c %s %c %c %s FTP 0 * %c\n",
-
-/*
- * XXX: wu-ftpd puts ' (send)' or ' (recv)' in the syslog message, and removes
- *	the full date.  This may be problematic for accurate log parsing,
- *	given that syslog messages don't contain the full date.
- */
-	    ctime(&now),
+	    "%lld %s " LLF " %s %c %s %c %c %s FTP 0 * %c\n",
 	    (long long int)(elapsed ? elapsed->tv_sec + (elapsed->tv_usec > 0) : 0),
 	    remotehost,
 	    (LLT) bytes,
